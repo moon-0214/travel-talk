@@ -1,0 +1,583 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>여행 회화 연습장</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* Layout: 탑승권처럼 생긴 문장 카드를 한 줄씩 쌓고, 위에는 언어·상황·모드 선택 바 */
+:root{
+  --bg:#EEF2F4; --surface:#FFFFFF; --ink:#16232E; --muted:#5B6B78; --line:#D5DDE3;
+  --accent:#0E7C7B; --accent-soft:#DCEFEE; --stamp:#B5462F;
+  --good:#1E8E4F; --good-soft:#DDF3E6; --warn:#B7791F; --warn-soft:#FBF0D9; --bad:#C0392B; --bad-soft:#F9E0DD;
+  --display:"Do Hyeon","Malgun Gothic",sans-serif;
+  --body:"Noto Sans KR","Malgun Gothic","Apple SD Gothic Neo",sans-serif;
+  --target:"Segoe UI","Microsoft YaHei","Yu Gothic UI","Leelawadee UI","Noto Sans KR",sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0F171D; --surface:#17222A; --ink:#E6EDF1; --muted:#93A3AF; --line:#2A3943;
+  --accent:#4FC3BF; --accent-soft:#163533; --stamp:#E48A73;
+  --good:#5CD18D; --good-soft:#163524; --warn:#E8B45A; --warn-soft:#352A15; --bad:#F07B6E; --bad-soft:#3A1C19;
+  color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#0F171D; --surface:#17222A; --ink:#E6EDF1; --muted:#93A3AF; --line:#2A3943;
+  --accent:#4FC3BF; --accent-soft:#163533; --stamp:#E48A73;
+  --good:#5CD18D; --good-soft:#163524; --warn:#E8B45A; --warn-soft:#352A15; --bad:#F07B6E; --bad-soft:#3A1C19;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.6 var(--body)}
+.wrap{max-width:860px;margin:0 auto;padding-block:24px 80px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1{font:400 34px/1.15 var(--display);margin:0 0 4px;letter-spacing:.5px}
+.sub{color:var(--muted);margin:0 0 18px}
+button{font:inherit;cursor:pointer}
+button:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+
+details.tips{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 16px;margin-bottom:18px}
+details.tips summary{font-weight:700;cursor:pointer}
+details.tips ol{margin:10px 0 4px;padding-left:20px}
+details.tips li{margin:4px 0}
+details.tips p{margin:6px 0;color:var(--muted);font-size:14px}
+
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding:10px 0 12px;display:grid;gap:10px;border-bottom:1px solid var(--line);margin-bottom:16px}
+.row{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.lbl{font-size:12px;letter-spacing:.08em;color:var(--muted);width:44px;flex:none}
+.chip{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:5px 13px;font-size:14px}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.lang .chip{font-weight:700}
+.prog{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--muted)}
+.prog .track{flex:1;height:6px;border-radius:3px;background:var(--line);overflow:hidden;max-width:260px}
+.prog .fill{height:100%;background:var(--accent);width:0;transition:width .3s}
+.voice{font-size:12px;color:var(--muted)}
+.voice.missing{color:var(--bad)}
+
+.list{display:grid;gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;display:grid;grid-template-columns:1fr auto;overflow:hidden}
+.main{padding:14px 18px;min-width:0}
+.stub{border-left:2px dashed var(--line);padding:14px 14px;display:flex;flex-direction:column;gap:6px;justify-content:center;min-width:118px}
+.ko{color:var(--muted);font-size:14px}
+.tag{display:inline-block;font-size:11px;letter-spacing:.06em;color:var(--accent);background:var(--accent-soft);border-radius:4px;padding:1px 7px;margin-bottom:4px}
+.today-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.today-head b{font:400 22px/1.2 var(--display)}
+.today-head span{color:var(--muted);font-size:13px;margin-left:6px}
+.target{font:600 24px/1.35 var(--target);margin:2px 0;word-break:keep-all;overflow-wrap:anywhere}
+.pron{font-size:17px;font-weight:700;color:var(--accent)}
+.roman{font-size:13px;color:var(--muted);font-style:italic}
+.hidden-box{display:none;color:var(--muted);font-size:14px;padding:6px 0}
+.act{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:8px;padding:6px 10px;font-size:14px;display:flex;align-items:center;gap:6px;justify-content:center}
+.act:hover{border-color:var(--accent)}
+.act.mic{background:var(--accent);color:var(--surface);border-color:var(--accent);font-weight:700}
+.act.mic.on{background:var(--stamp);border-color:var(--stamp)}
+.act.reveal{display:none}
+.result{grid-column:1/-1;border-top:1px solid var(--line);padding:10px 18px;display:none;font-size:14px}
+.result.show{display:block}
+.score{display:inline-block;font:400 22px/1 var(--display);padding:4px 10px;border-radius:6px;margin-right:8px;vertical-align:middle}
+.s-good{background:var(--good-soft);color:var(--good)}
+.s-warn{background:var(--warn-soft);color:var(--warn)}
+.s-bad{background:var(--bad-soft);color:var(--bad)}
+.heard{margin-top:6px;color:var(--muted)}
+.diff{margin-top:4px;font:500 18px/1.6 var(--target)}
+.diff .ok{color:var(--good)}
+.diff .miss{color:var(--bad);text-decoration:underline wavy;text-underline-offset:4px}
+.best{font-size:12px;color:var(--muted)}
+.best b{color:var(--good)}
+.passed .stub{background:var(--good-soft)}
+
+/* 모드: 듣기 연습은 글자를 가리고, 말하기 연습은 한국어만 보여준다 */
+body.m-listen .card:not(.open) .ko,
+body.m-listen .card:not(.open) .target,
+body.m-listen .card:not(.open) .pron,
+body.m-listen .card:not(.open) .roman,
+body.m-speak .card:not(.open) .target,
+body.m-speak .card:not(.open) .pron,
+body.m-speak .card:not(.open) .roman{display:none}
+body.m-listen .card:not(.open) .hidden-box,
+body.m-speak .card:not(.open) .hidden-box{display:block}
+body.m-listen .act.reveal,body.m-speak .act.reveal{display:flex}
+
+.warnbox{background:var(--warn-soft);color:var(--warn);border-radius:8px;padding:10px 14px;font-size:14px;margin-bottom:12px;display:none}
+.warnbox.show{display:block}
+
+@media (max-width:560px){
+  .card{grid-template-columns:1fr}
+  .stub{border-left:0;border-top:2px dashed var(--line);flex-direction:row;flex-wrap:wrap;min-width:0}
+  .stub .act{flex:1}
+  .target{font-size:21px}
+  h1{font-size:28px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>여행 회화 연습장</h1>
+  <p class="sub">듣고, 읽고, 따라 말하면 발음 점수를 알려줘요. 영어 · 중국어 · 일본어 · 스페인어 · 태국어</p>
+
+  <details class="tips">
+    <summary>울렁증 있을 때 하루 10분 루틴</summary>
+    <ol>
+      <li><b>천천히</b> 버튼으로 한 번, <b>듣기</b>로 한 번 들어요. 뜻은 몰라도 소리만 익혀요.</li>
+      <li>초록색 한글 발음을 보면서 소리 내어 3번 따라 해요. 작게 말해도 괜찮아요.</li>
+      <li><b>말하기</b>를 누르고 말해 보세요. 70점 넘으면 통과예요. 완벽할 필요 없어요.</li>
+      <li>통과한 문장은 <b>말하기 연습</b> 모드에서 한국어만 보고 떠올려 봐요.</li>
+      <li>마지막으로 <b>듣기 연습</b> 모드에서 소리만 듣고 뜻을 맞혀 봐요.</li>
+    </ol>
+    <p>매일 "오늘의 5문장"만 해도 충분해요. 날짜가 바뀌면 새 문장이 나오고, 통과한 문장도 하나씩 복습으로 섞여 나와요.</p>
+  </details>
+
+  <div class="warnbox" id="warn"></div>
+
+  <div class="bar">
+    <div class="row lang" id="langRow"><span class="lbl">언어</span></div>
+    <div class="row" id="catRow"><span class="lbl">상황</span></div>
+    <div class="row" id="modeRow"><span class="lbl">모드</span></div>
+    <div class="row" id="thaiRow" hidden><span class="lbl">말투</span></div>
+    <div class="prog"><span id="progTxt">통과 0/0</span><div class="track"><div class="fill" id="progFill"></div></div><span class="voice" id="voiceTxt"></span></div>
+  </div>
+
+  <div class="list" id="list"></div>
+</div>
+
+<script>
+const LANGS = {
+  en:{name:'영어',  code:'en-US', words:true},
+  zh:{name:'중국어', code:'zh-CN'},
+  ja:{name:'일본어', code:'ja-JP'},
+  es:{name:'스페인어',code:'es-ES', words:true},
+  th:{name:'태국어', code:'th-TH'}
+};
+const MODES = {study:'전체 보기', listen:'듣기 연습', speak:'말하기 연습'};
+
+/* 문장 데이터
+   en/es: [문장, 한글발음]
+   zh:    [문장, 병음, 한글발음]
+   ja:    [문장, 가나 읽기, 로마자, 한글발음]
+   th:    [문장, 로마자, 한글발음]  — {p}는 크랍/카 (남/여 존댓말 어미) */
+const CATS = [
+ {name:'기본 인사', items:[
+  {ko:'안녕하세요', en:['Hello.','헬로우'], zh:['你好。','nǐ hǎo','니 하오'], ja:['こんにちは。','こんにちは','konnichiwa','곤니치와'], es:['Hola.','올라'], th:['สวัสดี{p}','sawatdi {p}','싸왓디- {p}']},
+  {ko:'감사합니다', en:['Thank you.','땡큐'], zh:['谢谢。','xièxie','씨에씨에'], ja:['ありがとうございます。','ありがとうございます','arigatou gozaimasu','아리가또- 고자이마스'], es:['Gracias.','그라시아스'], th:['ขอบคุณ{p}','khop khun {p}','컵쿤 {p}']},
+  {ko:'실례합니다 / 죄송합니다', en:['Excuse me.','익스큐즈 미'], zh:['不好意思。','bù hǎo yìsi','뿌 하오 이쓰'], ja:['すみません。','すみません','sumimasen','스미마셍'], es:['Perdón.','뻬르돈'], th:['ขอโทษ{p}','kho thot {p}','커-톳 {p}']},
+  {ko:'괜찮아요', en:["It's okay.",'잇츠 오케이'], zh:['没关系。','méi guānxi','메이 꽌시'], ja:['大丈夫です。','だいじょうぶです','daijoubu desu','다이조-부 데스'], es:['Está bien.','에스따 비엔'], th:['ไม่เป็นไร{p}','mai pen rai {p}','마이 뻰 라이 {p}']},
+  {ko:'천천히 말해 주세요', en:['Could you speak slowly, please?','쿠쥬 스픽 슬로울리, 플리즈'], zh:['请说慢一点。','qǐng shuō màn yìdiǎn','칭 슈어 만 이디엔'], ja:['ゆっくり話してください。','ゆっくりはなしてください','yukkuri hanashite kudasai','육꾸리 하나시떼 구다사이'], es:['Más despacio, por favor.','마스 데스빠시오, 뽀르 파보르'], th:['พูดช้าๆ หน่อย{p}','phut cha cha noi {p}','풋 차-차- 너이 {p}']},
+  {ko:'이해 못 했어요', en:["I don't understand.",'아이 돈트 언더스탠드'], zh:['我听不懂。','wǒ tīng bù dǒng','워 팅 뿌 동'], ja:['わかりません。','わかりません','wakarimasen','와까리마셍'], es:['No entiendo.','노 엔띠엔도'], th:['ไม่เข้าใจ{p}','mai khao chai {p}','마이 카오짜이 {p}']},
+  {ko:'안녕히 계세요', en:['Goodbye.','굿바이'], zh:['再见。','zàijiàn','짜이찌엔'], ja:['さようなら。','さようなら','sayounara','사요-나라'], es:['Adiós.','아디오스'], th:['ลาก่อน{p}','la kon {p}','라-껀 {p}']},
+  {ko:'네, 맞아요', en:["Yes, that's right.",'예스, 댓츠 라잇'], zh:['对。','duì','뚜이'], ja:['はい、そうです。','はい、そうです','hai, sou desu','하이, 소-데스'], es:['Sí, correcto.','씨, 꼬렉또'], th:['ใช่{p}','chai {p}','차이 {p}']},
+  {ko:'아니요, 괜찮아요 (거절)', en:['No, thank you.','노, 땡큐'], zh:['不用了，谢谢。','bú yòng le, xièxie','부 융 러, 씨에씨에'], ja:['いいえ、結構です。','いいえ、けっこうです','iie, kekkou desu','이-에, 껙꼬-데스'], es:['No, gracias.','노, 그라시아스'], th:['ไม่เป็นไร ขอบคุณ{p}','mai pen rai khop khun {p}','마이뻰라이 컵쿤 {p}']},
+  {ko:'한 번 더 말해 주세요', en:['Could you say that again?','쿠쥬 세이 댓 어겐'], zh:['请再说一遍。','qǐng zài shuō yí biàn','칭 짜이 슈어 이 삐엔'], ja:['もう一度お願いします。','もういちどおねがいします','mou ichido onegai shimasu','모- 이찌도 오네가이시마스'], es:['¿Puede repetir, por favor?','뿌에데 레뻬띠르, 뽀르 파보르'], th:['พูดอีกครั้งได้ไหม{p}','phut ik khrang dai mai {p}','풋 익- 크랑 다이마이 {p}']},
+  {ko:'한국에서 왔어요', en:["I'm from Korea.",'아임 프롬 코리아'], zh:['我是韩国人。','wǒ shì Hánguó rén','워 스 한궈런'], ja:['韓国から来ました。','かんこくからきました','kankoku kara kimashita','칸꼬꾸까라 기마시따'], es:['Soy de Corea.','소이 데 꼬레아'], th:['มาจากเกาหลี{p}','ma chak kaoli {p}','마- 짝 까올리- {p}']},
+  {ko:'영어 할 줄 아세요?', en:['Do you speak English?','두 유 스픽 잉글리시'], zh:['你会说英语吗？','nǐ huì shuō Yīngyǔ ma','니 후이 슈어 잉위 마'], ja:['英語は話せますか？','えいごははなせますか','eigo wa hanasemasu ka','에-고와 하나세마스까'], es:['¿Habla inglés?','아블라 잉글레스'], th:['พูดภาษาอังกฤษได้ไหม{p}','phut phasa angkrit dai mai {p}','풋 파-싸- 앙끄릿 다이마이 {p}']}
+ ]},
+ {name:'공항·입국', items:[
+  {ko:'관광하러 왔어요', en:["I'm here for sightseeing.",'아임 히어 포 싸잇씽'], zh:['我来旅游。','wǒ lái lǚyóu','워 라이 뤼여우'], ja:['観光です。','かんこうです','kankou desu','칸꼬- 데스'], es:['Vengo de turismo.','벵고 데 뚜리스모'], th:['มาเที่ยว{p}','ma thiao {p}','마- 티여우 {p}']},
+  {ko:'일주일 머물 거예요', en:["I'm staying for one week.",'아임 스테잉 포 원 위크'], zh:['我待一个星期。','wǒ dāi yí ge xīngqī','워 따이 이거 싱치'], ja:['一週間滞在します。','いっしゅうかんたいざいします','isshuukan taizai shimasu','잇슈-깡 타이자이 시마스'], es:['Me quedo una semana.','메 께도 우나 세마나'], th:['อยู่หนึ่งอาทิตย์{p}','yu nueng athit {p}','유- 능 아-팃 {p}']},
+  {ko:'짐은 어디서 찾아요?', en:['Where is the baggage claim?','웨어 이즈 더 배기지 클레임'], zh:['在哪里取行李？','zài nǎlǐ qǔ xíngli','짜이 나리 취 씽리'], ja:['荷物はどこで受け取りますか？','にもつはどこでうけとりますか','nimotsu wa doko de uketorimasu ka','니모쯔와 도꼬데 우께또리마스까'], es:['¿Dónde recojo mi equipaje?','돈데 레꼬호 미 에끼빠헤'], th:['รับกระเป๋าที่ไหน{p}','rap krapao thi nai {p}','랍 끄라빠오 티-나이 {p}']},
+  {ko:'출구는 어디예요?', en:['Where is the exit?','웨어 이즈 디 엑싯'], zh:['出口在哪里？','chūkǒu zài nǎlǐ','추커우 짜이 나리'], ja:['出口はどこですか？','でぐちはどこですか','deguchi wa doko desu ka','데구찌와 도꼬데스까'], es:['¿Dónde está la salida?','돈데 에스따 라 살리다'], th:['ทางออกอยู่ที่ไหน{p}','thang ok yu thi nai {p}','탕억 유- 티-나이 {p}']},
+  {ko:'창가 자리로 주세요', en:['A window seat, please.','어 윈도우 씻, 플리즈'], zh:['我要靠窗的座位。','wǒ yào kào chuāng de zuòwèi','워 야오 카오 촹 더 쭤웨이'], ja:['窓側の席をお願いします。','まどがわのせきをおねがいします','madogawa no seki o onegai shimasu','마도가와노 세끼오 오네가이시마스'], es:['Un asiento de ventana, por favor.','운 아시엔또 데 벤따나, 뽀르 파보르'], th:['ขอที่นั่งริมหน้าต่าง{p}','kho thi nang rim natang {p}','커- 티-낭 림 나-땅 {p}']},
+  {ko:'환전하는 곳 어디예요?', en:['Where can I exchange money?','웨어 캔 아이 익스체인지 머니'], zh:['在哪里换钱？','zài nǎlǐ huànqián','짜이 나리 환치엔'], ja:['両替所はどこですか？','りょうがえじょはどこですか','ryougaejo wa doko desu ka','료-가에죠와 도꼬데스까'], es:['¿Dónde puedo cambiar dinero?','돈데 뿌에도 깜비아르 디네로'], th:['แลกเงินที่ไหน{p}','laek ngoen thi nai {p}','랙- 응언 티-나이 {p}']},
+  {ko:'탑승구가 어디예요?', en:['Where is the gate?','웨어 이즈 더 게잇'], zh:['登机口在哪里？','dēngjīkǒu zài nǎlǐ','떵지커우 짜이 나리'], ja:['搭乗口はどこですか？','とうじょうぐちはどこですか','toujouguchi wa doko desu ka','토-죠-구찌와 도꼬데스까'], es:['¿Dónde está la puerta de embarque?','돈데 에스따 라 뿌에르따 데 엠바르께'], th:['ประตูขึ้นเครื่องอยู่ที่ไหน{p}','pratu khuen khrueang yu thi nai {p}','쁘라뚜- 큰 크르앙 유- 티-나이 {p}']},
+  {ko:'짐이 안 나왔어요', en:["My luggage didn't arrive.",'마이 러기지 디든트 어라이브'], zh:['我的行李没到。','wǒ de xíngli méi dào','워 더 씽리 메이 따오'], ja:['荷物が出てきません。','にもつがでてきません','nimotsu ga dete kimasen','니모쯔가 데떼 기마셍'], es:['Mi equipaje no llegó.','미 에끼빠헤 노 예고'], th:['กระเป๋าไม่มา{p}','krapao mai ma {p}','끄라빠오 마이 마- {p}']},
+  {ko:'비행기를 놓쳤어요', en:['I missed my flight.','아이 미스드 마이 플라잇'], zh:['我错过了航班。','wǒ cuòguò le hángbān','워 춰궈 러 항빤'], ja:['飛行機に乗り遅れました。','ひこうきにのりおくれました','hikouki ni noriokuremashita','히꼬-끼니 노리오꾸레마시따'], es:['Perdí mi vuelo.','뻬르디 미 부엘로'], th:['ตกเครื่องบิน{p}','tok khrueang bin {p}','똑 크르앙빈 {p}']},
+  {ko:'공항 가는 버스 어디서 타요?', en:['Where can I take the airport bus?','웨어 캔 아이 테익 디 에어포트 버스'], zh:['机场大巴在哪里坐？','jīchǎng dàbā zài nǎlǐ zuò','지창 따빠 짜이 나리 쭤'], ja:['空港行きのバスはどこですか？','くうこういきのバスはどこですか','kuukou iki no basu wa doko desu ka','쿠-꼬- 이끼노 바스와 도꼬데스까'], es:['¿Dónde tomo el autobús al aeropuerto?','돈데 또모 엘 아우또부스 알 아에로뿌에르또'], th:['ขึ้นรถบัสไปสนามบินที่ไหน{p}','khuen rot bat pai sanam bin thi nai {p}','큰 롯밧 빠이 싸남빈 티-나이 {p}']}
+ ]},
+ {name:'호텔', items:[
+  {ko:'체크인할게요', en:["I'd like to check in.",'아이드 라익 투 체크인'], zh:['我要办理入住。','wǒ yào bànlǐ rùzhù','워 야오 빤리 루주'], ja:['チェックインお願いします。','チェックインおねがいします','chekkuin onegai shimasu','첵꾸잉 오네가이시마스'], es:['Quiero hacer el check-in.','끼에로 아세르 엘 체킨'], th:['ขอเช็คอิน{p}','kho chek in {p}','커- 첵인 {p}']},
+  {ko:'예약했어요', en:['I have a reservation.','아이 해브 어 레저베이션'], zh:['我有预订。','wǒ yǒu yùdìng','워 여우 위띵'], ja:['予約しています。','よやくしています','yoyaku shite imasu','요야꾸 시떼 이마스'], es:['Tengo una reserva.','뗑고 우나 레세르바'], th:['จองไว้แล้ว{p}','chong wai laeo {p}','쩡 와이 래-우 {p}']},
+  {ko:'와이파이 비밀번호가 뭐예요?', en:["What's the Wi-Fi password?",'왓츠 더 와이파이 패스워드'], zh:['WiFi密码是多少？','WiFi mìmǎ shì duōshao','와이파이 미마 스 뚜어샤오'], ja:['Wi-Fiのパスワードは何ですか？','ワイファイのパスワードはなんですか','waifai no pasuwaado wa nan desu ka','와이파이노 파스와-도와 난데스까'], es:['¿Cuál es la contraseña del wifi?','꾸알 에스 라 꼰뜨라세냐 델 위피'], th:['รหัสไวไฟคืออะไร{p}','rahat waifai khue arai {p}','라핫 와이파이 크- 아라이 {p}']},
+  {ko:'짐 맡겨도 될까요?', en:['Can I leave my luggage here?','캔 아이 리브 마이 러기지 히어'], zh:['可以寄存行李吗？','kěyǐ jìcún xíngli ma','커이 찌춘 씽리 마'], ja:['荷物を預けてもいいですか？','にもつをあずけてもいいですか','nimotsu o azukete mo ii desu ka','니모쯔오 아즈께떼모 이-데스까'], es:['¿Puedo dejar mi equipaje aquí?','뿌에도 데하르 미 에끼빠헤 아끼'], th:['ฝากกระเป๋าได้ไหม{p}','fak krapao dai mai {p}','팍- 끄라빠오 다이마이 {p}']},
+  {ko:'체크아웃은 몇 시예요?', en:['What time is check-out?','왓 타임 이즈 체크아웃'], zh:['几点退房？','jǐ diǎn tuìfáng','지 디엔 퉤이팡'], ja:['チェックアウトは何時ですか？','チェックアウトはなんじですか','chekkuauto wa nanji desu ka','첵꾸아우또와 난지데스까'], es:['¿A qué hora es el check-out?','아 께 오라 에스 엘 체까웃'], th:['เช็คเอาท์กี่โมง{p}','chek ao ki mong {p}','첵아오 끼-몽 {p}']},
+  {ko:'수건 더 주세요', en:['Can I have more towels?','캔 아이 해브 모어 타월스'], zh:['请再给我几条毛巾。','qǐng zài gěi wǒ jǐ tiáo máojīn','칭 짜이 게이 워 지 탸오 마오진'], ja:['タオルをもう少しください。','タオルをもうすこしください','taoru o mou sukoshi kudasai','타오루오 모- 스꼬시 구다사이'], es:['Más toallas, por favor.','마스 또아야스, 뽀르 파보르'], th:['ขอผ้าเช็ดตัวเพิ่ม{p}','kho pha chet tua phoem {p}','커- 파-쳇뚜어 펌- {p}']},
+  {ko:'에어컨이 안 돼요', en:["The air conditioner doesn't work.",'디 에어컨디셔너 더즌트 워크'], zh:['空调坏了。','kōngtiáo huài le','콩탸오 화이 러'], ja:['エアコンが動きません。','エアコンがうごきません','eakon ga ugokimasen','에아꽁가 우고끼마셍'], es:['El aire acondicionado no funciona.','엘 아이레 아꼰디시오나도 노 푼시오나'], th:['แอร์เสีย{p}','ae sia {p}','애- 씨어 {p}']},
+  {ko:'아침 식사는 몇 시예요?', en:['What time is breakfast?','왓 타임 이즈 브렉퍼스트'], zh:['早餐几点？','zǎocān jǐ diǎn','짜오찬 지 디엔'], ja:['朝食は何時からですか？','ちょうしょくはなんじからですか','choushoku wa nanji kara desu ka','쵸-쇼꾸와 난지까라데스까'], es:['¿A qué hora es el desayuno?','아 께 오라 에스 엘 데사유노'], th:['อาหารเช้ากี่โมง{p}','ahan chao ki mong {p}','아-한 차오 끼-몽 {p}']},
+  {ko:'방 열쇠를 잃어버렸어요', en:['I lost my room key.','아이 로스트 마이 룸 키'], zh:['我的房卡丢了。','wǒ de fángkǎ diū le','워 더 팡카 띠우 러'], ja:['部屋の鍵をなくしました。','へやのかぎをなくしました','heya no kagi o nakushimashita','헤야노 가기오 나꾸시마시따'], es:['Perdí la llave de mi habitación.','뻬르디 라 야베 데 미 아비따시온'], th:['ทำกุญแจห้องหาย{p}','tham kunchae hong hai {p}','탐 꾼째- 헝 하이 {p}']},
+  {ko:'택시 불러 주실 수 있어요?', en:['Could you call a taxi for me?','쿠쥬 콜 어 택시 포 미'], zh:['能帮我叫辆出租车吗？','néng bāng wǒ jiào liàng chūzūchē ma','넝 빵 워 쨔오 량 추쭈처 마'], ja:['タクシーを呼んでもらえますか？','タクシーをよんでもらえますか','takushii o yonde moraemasu ka','타꾸시-오 욘데 모라에마스까'], es:['¿Me puede llamar un taxi?','메 뿌에데 야마르 운 딱시'], th:['ช่วยเรียกแท็กซี่ให้หน่อยได้ไหม{p}','chuai riak thaeksi hai noi dai mai {p}','추어이 리-약 택씨- 하이 너이 다이마이 {p}']}
+ ]},
+ {name:'식당', items:[
+  {ko:'두 명이에요', en:['A table for two, please.','어 테이블 포 투, 플리즈'], zh:['两位。','liǎng wèi','량 웨이'], ja:['二人です。','ふたりです','futari desu','후따리 데스'], es:['Una mesa para dos, por favor.','우나 메사 빠라 도스, 뽀르 파보르'], th:['สองคน{p}','song khon {p}','썽- 콘 {p}']},
+  {ko:'메뉴판 주세요', en:['Can I see the menu, please?','캔 아이 씨 더 메뉴, 플리즈'], zh:['请给我菜单。','qǐng gěi wǒ càidān','칭 게이 워 차이딴'], ja:['メニューをください。','メニューをください','menyuu o kudasai','메뉴-오 구다사이'], es:['La carta, por favor.','라 까르따, 뽀르 파보르'], th:['ขอเมนูหน่อย{p}','kho menu noi {p}','커- 메-누- 너이 {p}']},
+  {ko:'이걸로 주세요', en:["I'll have this one.",'아일 해브 디스 원'], zh:['我要这个。','wǒ yào zhège','워 야오 쩌거'], ja:['これをください。','これをください','kore o kudasai','고레오 구다사이'], es:['Quiero esto.','끼에로 에스또'], th:['เอาอันนี้{p}','ao an ni {p}','아오 안니- {p}']},
+  {ko:'고수 빼 주세요', en:['No cilantro, please.','노 실란트로, 플리즈'], zh:['不要香菜。','bú yào xiāngcài','부 야오 샹차이'], ja:['パクチー抜きでお願いします。','パクチーぬきでおねがいします','pakuchii nuki de onegai shimasu','파꾸치- 누끼데 오네가이시마스'], es:['Sin cilantro, por favor.','신 실란뜨로, 뽀르 파보르'], th:['ไม่ใส่ผักชี{p}','mai sai phakchi {p}','마이 싸이 팍치- {p}']},
+  {ko:'너무 맵지 않게 해 주세요', en:['Not too spicy, please.','낫 투 스파이시, 플리즈'], zh:['不要太辣。','bú yào tài là','부 야오 타이 라'], ja:['辛さ控えめでお願いします。','からさひかえめでおねがいします','karasa hikaeme de onegai shimasu','가라사 히까에메데 오네가이시마스'], es:['No muy picante, por favor.','노 무이 삐깐떼, 뽀르 파보르'], th:['ไม่เผ็ดมาก{p}','mai phet mak {p}','마이 펫 막- {p}']},
+  {ko:'맛있어요!', en:["It's delicious!",'잇츠 딜리셔스'], zh:['很好吃！','hěn hǎochī','헌 하오츠'], ja:['おいしいです！','おいしいです','oishii desu','오이시- 데스'], es:['¡Está delicioso!','에스따 델리시오소'], th:['อร่อยมาก{p}','aroi mak {p}','아러이 막- {p}']},
+  {ko:'계산서 주세요', en:['Check, please.','체크, 플리즈'], zh:['买单。','mǎidān','마이딴'], ja:['お会計お願いします。','おかいけいおねがいします','okaikei onegai shimasu','오까이께- 오네가이시마스'], es:['La cuenta, por favor.','라 꾸엔따, 뽀르 파보르'], th:['เช็คบิล{p}','chek bin {p}','첵빈 {p}']},
+  {ko:'뭐가 맛있어요? (추천)', en:['What do you recommend?','왓 두 유 레커멘드'], zh:['你推荐什么？','nǐ tuījiàn shénme','니 퉤이찌엔 션머'], ja:['おすすめは何ですか？','おすすめはなんですか','osusume wa nan desu ka','오스스메와 난데스까'], es:['¿Qué me recomienda?','께 메 레꼬미엔다'], th:['แนะนำอะไรดี{p}','nae nam arai di {p}','내남 아라이 디- {p}']},
+  {ko:'물 주세요', en:['Water, please.','워터, 플리즈'], zh:['请给我一杯水。','qǐng gěi wǒ yì bēi shuǐ','칭 게이 워 이 뻬이 쉐이'], ja:['お水をください。','おみずをください','omizu o kudasai','오미즈오 구다사이'], es:['Agua, por favor.','아구아, 뽀르 파보르'], th:['ขอน้ำเปล่า{p}','kho nam plao {p}','커- 남쁘라오 {p}']},
+  {ko:'맥주 한 병 주세요', en:['One beer, please.','원 비어, 플리즈'], zh:['来一瓶啤酒。','lái yì píng píjiǔ','라이 이 핑 피지우'], ja:['ビールを一つください。','ビールをひとつください','biiru o hitotsu kudasai','비-루오 히또쯔 구다사이'], es:['Una cerveza, por favor.','우나 세르베사, 뽀르 파보르'], th:['ขอเบียร์หนึ่งขวด{p}','kho bia nueng khuat {p}','커- 비야 능 쿠엇 {p}']},
+  {ko:'포장해 주세요', en:['Can I get this to go?','캔 아이 겟 디스 투 고'], zh:['打包。','dǎbāo','다빠오'], ja:['持ち帰りでお願いします。','もちかえりでおねがいします','mochikaeri de onegai shimasu','모찌까에리데 오네가이시마스'], es:['Para llevar, por favor.','빠라 예바르, 뽀르 파보르'], th:['ใส่ห่อกลับบ้าน{p}','sai ho klap ban {p}','싸이 허- 끌랍 반- {p}']},
+  {ko:'땅콩 알레르기가 있어요', en:["I'm allergic to peanuts.",'아임 얼러직 투 피넛츠'], zh:['我对花生过敏。','wǒ duì huāshēng guòmǐn','워 뚜이 화셩 꿔민'], ja:['ピーナッツアレルギーがあります。','ピーナッツアレルギーがあります','piinattsu arerugii ga arimasu','피-낫쯔 아레루기-가 아리마스'], es:['Soy alérgico al cacahuete.','소이 알레르히꼬 알 까까우에떼'], th:['แพ้ถั่วลิสง{p}','phae thua lisong {p}','패- 투어 리쏭 {p}']},
+  {ko:'이거 주문 안 했어요', en:["I didn't order this.",'아이 디든트 오더 디스'], zh:['我没点这个。','wǒ méi diǎn zhège','워 메이 디엔 쩌거'], ja:['これは頼んでいません。','これはたのんでいません','kore wa tanonde imasen','고레와 다논데 이마셍'], es:['No pedí esto.','노 뻬디 에스또'], th:['ไม่ได้สั่งอันนี้{p}','mai dai sang an ni {p}','마이다이 쌍 안니- {p}']}
+ ]},
+ {name:'쇼핑', items:[
+  {ko:'이거 얼마예요?', en:['How much is this?','하우 머치 이즈 디스'], zh:['这个多少钱？','zhège duōshao qián','쩌거 뚜어샤오 치엔'], ja:['これはいくらですか？','これはいくらですか','kore wa ikura desu ka','고레와 이꾸라데스까'], es:['¿Cuánto cuesta esto?','꾸안또 꾸에스따 에스또'], th:['อันนี้เท่าไหร่{p}','an ni thao rai {p}','안니- 타오라이 {p}']},
+  {ko:'좀 깎아 주세요', en:['Can you give me a discount?','캔 유 기브 미 어 디스카운트'], zh:['便宜一点吧。','piányi yìdiǎn ba','피엔이 이디엔 바'], ja:['少し安くなりますか？','すこしやすくなりますか','sukoshi yasuku narimasu ka','스꼬시 야스꾸 나리마스까'], es:['¿Me hace un descuento?','메 아세 운 데스꾸엔또'], th:['ลดหน่อยได้ไหม{p}','lot noi dai mai {p}','롯 너이 다이마이 {p}']},
+  {ko:'카드 되나요?', en:['Can I pay by card?','캔 아이 페이 바이 카드'], zh:['可以刷卡吗？','kěyǐ shuākǎ ma','커이 쏴카 마'], ja:['カードで払えますか？','カードではらえますか','kaado de haraemasu ka','카-도데 하라에마스까'], es:['¿Puedo pagar con tarjeta?','뿌에도 빠가르 꼰 따르헤따'], th:['จ่ายด้วยบัตรได้ไหม{p}','chai duai bat dai mai {p}','짜이 두어이 밧 다이마이 {p}']},
+  {ko:'그냥 구경하는 중이에요', en:["I'm just looking.",'아임 저스트 루킹'], zh:['我只是看看。','wǒ zhǐshì kànkan','워 즈스 칸칸'], ja:['見ているだけです。','みているだけです','mite iru dake desu','미떼이루 다께데스'], es:['Solo estoy mirando.','솔로 에스또이 미란도'], th:['ดูเฉยๆ{p}','du choei choei {p}','두- 처-이처-이 {p}']},
+  {ko:'봉투 주세요', en:['Can I have a bag, please?','캔 아이 해브 어 백, 플리즈'], zh:['请给我一个袋子。','qǐng gěi wǒ yí ge dàizi','칭 게이 워 이거 따이즈'], ja:['袋をください。','ふくろをください','fukuro o kudasai','후꾸로오 구다사이'], es:['Una bolsa, por favor.','우나 볼사, 뽀르 파보르'], th:['ขอถุงด้วย{p}','kho thung duai {p}','커- 퉁 두어이 {p}']},
+  {ko:'다른 색 있어요?', en:['Do you have another color?','두 유 해브 어나더 컬러'], zh:['有别的颜色吗？','yǒu bié de yánsè ma','여우 비에 더 옌써 마'], ja:['他の色はありますか？','ほかのいろはありますか','hoka no iro wa arimasu ka','호까노 이로와 아리마스까'], es:['¿Tiene otro color?','띠에네 오뜨로 꼴로르'], th:['มีสีอื่นไหม{p}','mi si uen mai {p}','미- 씨- 은- 마이 {p}']},
+  {ko:'더 큰 사이즈 있어요?', en:['Do you have a bigger size?','두 유 해브 어 비거 사이즈'], zh:['有大一点的吗？','yǒu dà yìdiǎn de ma','여우 따 이디엔 더 마'], ja:['もっと大きいサイズはありますか？','もっとおおきいサイズはありますか','motto ookii saizu wa arimasu ka','못또 오-끼- 사이즈와 아리마스까'], es:['¿Tiene una talla más grande?','띠에네 우나 따야 마스 그란데'], th:['มีไซส์ใหญ่กว่านี้ไหม{p}','mi sai yai kwa ni mai {p}','미- 싸이 야이 꽈- 니- 마이 {p}']},
+  {ko:'입어 봐도 돼요?', en:['Can I try it on?','캔 아이 트라이 잇 온'], zh:['可以试一下吗？','kěyǐ shì yíxià ma','커이 스 이샤 마'], ja:['試着してもいいですか？','しちゃくしてもいいですか','shichaku shite mo ii desu ka','시챠꾸 시떼모 이-데스까'], es:['¿Me lo puedo probar?','메 로 뿌에도 쁘로바르'], th:['ลองได้ไหม{p}','long dai mai {p}','렁- 다이마이 {p}']},
+  {ko:'이걸로 살게요', en:["I'll take it.",'아일 테익 잇'], zh:['就要这个吧。','jiù yào zhège ba','찌우 야오 쩌거 바'], ja:['これにします。','これにします','kore ni shimasu','고레니 시마스'], es:['Me lo llevo.','메 로 예보'], th:['ตกลงเอาอันนี้{p}','toklong ao an ni {p}','똑롱 아오 안니- {p}']},
+  {ko:'면세 되나요?', en:['Can I get a tax refund?','캔 아이 겟 어 택스 리펀드'], zh:['可以退税吗？','kěyǐ tuìshuì ma','커이 퉤이쉐이 마'], ja:['免税できますか？','めんぜいできますか','menzei dekimasu ka','멘제- 데끼마스까'], es:['¿Puedo pedir la devolución de impuestos?','뿌에도 뻬디르 라 데볼루시온 데 임뿌에스또스'], th:['ขอคืนภาษีได้ไหม{p}','kho khuen phasi dai mai {p}','커- 큰- 파-씨- 다이마이 {p}']},
+  {ko:'영수증 주세요', en:['Can I have a receipt?','캔 아이 해브 어 리씻'], zh:['请给我收据。','qǐng gěi wǒ shōujù','칭 게이 워 셔우쥐'], ja:['レシートをください。','レシートをください','reshiito o kudasai','레시-또오 구다사이'], es:['El recibo, por favor.','엘 레시보, 뽀르 파보르'], th:['ขอใบเสร็จ{p}','kho bai set {p}','커- 바이쎗 {p}']}
+ ]},
+ {name:'교통·길찾기', items:[
+  {ko:'화장실 어디예요?', en:['Where is the restroom?','웨어 이즈 더 레스트룸'], zh:['洗手间在哪里？','xǐshǒujiān zài nǎlǐ','시셔우지엔 짜이 나리'], ja:['トイレはどこですか？','トイレはどこですか','toire wa doko desu ka','토이레와 도꼬데스까'], es:['¿Dónde está el baño?','돈데 에스따 엘 바뇨'], th:['ห้องน้ำอยู่ที่ไหน{p}','hong nam yu thi nai {p}','헝남 유- 티-나이 {p}']},
+  {ko:'이 주소로 가 주세요', en:['Please take me to this address.','플리즈 테익 미 투 디스 어드레스'], zh:['请去这个地址。','qǐng qù zhège dìzhǐ','칭 취 쩌거 띠즈'], ja:['この住所までお願いします。','このじゅうしょまでおねがいします','kono juusho made onegai shimasu','고노 쥬-쇼마데 오네가이시마스'], es:['A esta dirección, por favor.','아 에스따 디렉시온, 뽀르 파보르'], th:['ไปที่อยู่นี้{p}','pai thi yu ni {p}','빠이 티-유- 니- {p}']},
+  {ko:'지하철역 어디예요?', en:['Where is the subway station?','웨어 이즈 더 서브웨이 스테이션'], zh:['地铁站在哪里？','dìtiě zhàn zài nǎlǐ','띠티에 짠 짜이 나리'], ja:['駅はどこですか？','えきはどこですか','eki wa doko desu ka','에끼와 도꼬데스까'], es:['¿Dónde está la estación de metro?','돈데 에스따 라 에스따시온 데 메뜨로'], th:['สถานีรถไฟฟ้าอยู่ที่ไหน{p}','sathani rotfaifa yu thi nai {p}','싸타-니- 롯파이파- 유- 티-나이 {p}']},
+  {ko:'여기서 멀어요?', en:['Is it far from here?','이즈 잇 파 프롬 히어'], zh:['离这里远吗？','lí zhèlǐ yuǎn ma','리 쩌리 위엔 마'], ja:['ここから遠いですか？','ここからとおいですか','koko kara tooi desu ka','고꼬까라 또-이데스까'], es:['¿Está lejos de aquí?','에스따 레호스 데 아끼'], th:['ไกลจากที่นี่ไหม{p}','klai chak thi ni mai {p}','끌라이 짝 티-니- 마이 {p}']},
+  {ko:'여기서 세워 주세요', en:['Please stop here.','플리즈 스탑 히어'], zh:['请在这里停。','qǐng zài zhèlǐ tíng','칭 짜이 쩌리 팅'], ja:['ここで止めてください。','ここでとめてください','koko de tomete kudasai','고꼬데 도메떼 구다사이'], es:['Pare aquí, por favor.','빠레 아끼, 뽀르 파보르'], th:['จอดตรงนี้{p}','chot trong ni {p}','쩟 뜨롱니- {p}']},
+  {ko:'표 한 장 주세요', en:['One ticket, please.','원 티켓, 플리즈'], zh:['一张票。','yì zhāng piào','이 짱 퍄오'], ja:['切符を一枚ください。','きっぷをいちまいください','kippu o ichimai kudasai','깁뿌오 이찌마이 구다사이'], es:['Un billete, por favor.','운 비예떼, 뽀르 파보르'], th:['ขอตั๋วหนึ่งใบ{p}','kho tua nueng bai {p}','커- 뚜어 능 바이 {p}']},
+  {ko:'이 버스 시내 가요?', en:['Does this bus go downtown?','더즈 디스 버스 고 다운타운'], zh:['这辆车去市中心吗？','zhè liàng chē qù shì zhōngxīn ma','쩌 량 처 취 스 중신 마'], ja:['このバスは市内に行きますか？','このバスはしないにいきますか','kono basu wa shinai ni ikimasu ka','고노 바스와 시나이니 이끼마스까'], es:['¿Este autobús va al centro?','에스떼 아우또부스 바 알 센뜨로'], th:['รถคันนี้ไปในเมืองไหม{p}','rot khan ni pai nai mueang mai {p}','롯 칸니- 빠이 나이 므앙 마이 {p}']},
+  {ko:'얼마나 걸려요?', en:['How long does it take?','하우 롱 더즈 잇 테익'], zh:['要多长时间？','yào duō cháng shíjiān','야오 뚜어 창 스지엔'], ja:['どのくらいかかりますか？','どのくらいかかりますか','dono kurai kakarimasu ka','도노꾸라이 가까리마스까'], es:['¿Cuánto tiempo tarda?','꾸안또 띠엠뽀 따르다'], th:['ใช้เวลานานไหม{p}','chai wela nan mai {p}','차이 웰-라- 난- 마이 {p}']},
+  {ko:'걸어서 갈 수 있어요?', en:['Can I walk there?','캔 아이 워크 데어'], zh:['走路能到吗？','zǒulù néng dào ma','저우루 넝 따오 마'], ja:['歩いて行けますか？','あるいていけますか','aruite ikemasu ka','아루이떼 이께마스까'], es:['¿Se puede ir caminando?','세 뿌에데 이르 까미난도'], th:['เดินไปได้ไหม{p}','doen pai dai mai {p}','던- 빠이 다이마이 {p}']},
+  {ko:'미터기 켜 주세요', en:['Please use the meter.','플리즈 유즈 더 미터'], zh:['请打表。','qǐng dǎ biǎo','칭 다 뱌오'], ja:['メーターを使ってください。','メーターをつかってください','meetaa o tsukatte kudasai','메-따-오 쯔깟떼 구다사이'], es:['Ponga el taxímetro, por favor.','뽕가 엘 딱시메뜨로, 뽀르 파보르'], th:['เปิดมิเตอร์ด้วย{p}','poet mitoe duai {p}','뻣- 미떠- 두어이 {p}']},
+  {ko:'지도에서 보여 주세요', en:['Can you show me on the map?','캔 유 쇼 미 온 더 맵'], zh:['请在地图上指给我看。','qǐng zài dìtú shang zhǐ gěi wǒ kàn','칭 짜이 띠투 샹 즈 게이 워 칸'], ja:['地図で教えてください。','ちずでおしえてください','chizu de oshiete kudasai','치즈데 오시에떼 구다사이'], es:['¿Me lo muestra en el mapa?','메 로 무에스뜨라 엔 엘 마빠'], th:['ช่วยชี้ในแผนที่หน่อย{p}','chuai chi nai phaenthi noi {p}','추어이 치- 나이 팬-티- 너이 {p}']}
+ ]},
+ {name:'긴급·도움', items:[
+  {ko:'도와주세요!', en:['Help me, please!','헬프 미, 플리즈'], zh:['请帮帮我！','qǐng bāngbang wǒ','칭 빵방 워'], ja:['助けてください！','たすけてください','tasukete kudasai','다스께떼 구다사이'], es:['¡Ayúdeme, por favor!','아유데메, 뽀르 파보르'], th:['ช่วยด้วย','chuai duai','추어이 두어이']},
+  {ko:'길을 잃었어요', en:["I'm lost.",'아임 로스트'], zh:['我迷路了。','wǒ mílù le','워 미루 러'], ja:['道に迷いました。','みちにまよいました','michi ni mayoimashita','미찌니 마요이마시따'], es:['Me perdí.','메 뻬르디'], th:['หลงทาง{p}','long thang {p}','롱탕 {p}']},
+  {ko:'여권을 잃어버렸어요', en:['I lost my passport.','아이 로스트 마이 패스포트'], zh:['我的护照丢了。','wǒ de hùzhào diū le','워 더 후자오 띠우 러'], ja:['パスポートをなくしました。','パスポートをなくしました','pasupooto o nakushimashita','파스뽀-또오 나꾸시마시따'], es:['Perdí mi pasaporte.','뻬르디 미 빠사뽀르떼'], th:['ทำพาสปอร์ตหาย{p}','tham passport hai {p}','탐 파-스뻣 하이 {p}']},
+  {ko:'병원에 가야 해요', en:['I need to go to the hospital.','아이 니드 투 고 투 더 하스피털'], zh:['我要去医院。','wǒ yào qù yīyuàn','워 야오 취 이위엔'], ja:['病院に行きたいです。','びょういんにいきたいです','byouin ni ikitai desu','뵤-인니 이끼따이데스'], es:['Necesito ir al hospital.','네세시또 이르 알 오스삐딸'], th:['ต้องไปโรงพยาบาล{p}','tong pai rongphayaban {p}','떵 빠이 롱파야-반 {p}']},
+  {ko:'경찰 불러 주세요', en:['Please call the police.','플리즈 콜 더 폴리스'], zh:['请叫警察。','qǐng jiào jǐngchá','칭 쨔오 징차'], ja:['警察を呼んでください。','けいさつをよんでください','keisatsu o yonde kudasai','께-사쯔오 욘데 구다사이'], es:['Llame a la policía, por favor.','야메 아 라 뽈리시아, 뽀르 파보르'], th:['ช่วยเรียกตำรวจ{p}','chuai riak tamruat {p}','추어이 리-약 땀루엇 {p}']},
+  {ko:'배가 아파요', en:['I have a stomachache.','아이 해브 어 스터먹에익'], zh:['我肚子疼。','wǒ dùzi téng','워 뚜즈 텅'], ja:['お腹が痛いです。','おなかがいたいです','onaka ga itai desu','오나까가 이따이데스'], es:['Me duele el estómago.','메 두엘레 엘 에스또마고'], th:['ปวดท้อง{p}','puat thong {p}','뿌엇 텅- {p}']},
+  {ko:'지갑을 도둑맞았어요', en:['My wallet was stolen.','마이 월릿 워즈 스톨른'], zh:['我的钱包被偷了。','wǒ de qiánbāo bèi tōu le','워 더 치엔빠오 뻬이 터우 러'], ja:['財布を盗まれました。','さいふをぬすまれました','saifu o nusumaremashita','사이후오 누스마레마시따'], es:['Me robaron la cartera.','메 로바론 라 까르떼라'], th:['กระเป๋าสตางค์โดนขโมย{p}','krapao satang don khamoi {p}','끄라빠오 싸땅 돈- 카모-이 {p}']},
+  {ko:'한국 대사관은 어디예요?', en:['Where is the Korean embassy?','웨어 이즈 더 코리안 엠버시'], zh:['韩国大使馆在哪里？','Hánguó dàshǐguǎn zài nǎlǐ','한궈 따스관 짜이 나리'], ja:['韓国大使館はどこですか？','かんこくたいしかんはどこですか','kankoku taishikan wa doko desu ka','칸꼬꾸 타이시깡와 도꼬데스까'], es:['¿Dónde está la embajada de Corea?','돈데 에스따 라 엠바하다 데 꼬레아'], th:['สถานทูตเกาหลีอยู่ที่ไหน{p}','sathanthut kaoli yu thi nai {p}','싸탄-툿 까올리- 유- 티-나이 {p}']}
+ ]},
+ {name:'카페', items:[
+  {ko:'아이스 아메리카노 하나 주세요', en:['One iced americano, please.','원 아이스드 아메리카노, 플리즈'], zh:['一杯冰美式。','yì bēi bīng měishì','이 뻬이 삥 메이스'], ja:['アイスコーヒーを一つください。','アイスコーヒーをひとつください','aisu koohii o hitotsu kudasai','아이스 코-히-오 히또쯔 구다사이'], es:['Un americano con hielo, por favor.','운 아메리까노 꼰 이엘로, 뽀르 파보르'], th:['ขออเมริกาโน่เย็นแก้วหนึ่ง{p}','kho amerikano yen kaeo nueng {p}','커- 아메리까노- 옌 깨-우 능 {p}']},
+  {ko:'따뜻한 걸로 주세요', en:['Hot, please.','핫, 플리즈'], zh:['要热的。','yào rè de','야오 러 더'], ja:['ホットでお願いします。','ホットでおねがいします','hotto de onegai shimasu','홋또데 오네가이시마스'], es:['Caliente, por favor.','깔리엔떼, 뽀르 파보르'], th:['เอาร้อน{p}','ao ron {p}','아오 런- {p}']},
+  {ko:'설탕 빼 주세요', en:['No sugar, please.','노 슈거, 플리즈'], zh:['不要糖。','bú yào táng','부 야오 탕'], ja:['砂糖なしでお願いします。','さとうなしでおねがいします','satou nashi de onegai shimasu','사또-나시데 오네가이시마스'], es:['Sin azúcar, por favor.','신 아수까르, 뽀르 파보르'], th:['ไม่ใส่น้ำตาล{p}','mai sai namtan {p}','마이 싸이 남딴- {p}']},
+  {ko:'여기서 마실게요', en:['For here, please.','포 히어, 플리즈'], zh:['在这里喝。','zài zhèlǐ hē','짜이 쩌리 허'], ja:['店内で飲みます。','てんないでのみます','tennai de nomimasu','텐나이데 노미마스'], es:['Para tomar aquí.','빠라 또마르 아끼'], th:['ทานที่นี่{p}','than thi ni {p}','탄- 티-니- {p}']},
+  {ko:'화장실 비밀번호가 뭐예요?', en:["What's the restroom code?",'왓츠 더 레스트룸 코드'], zh:['洗手间密码是多少？','xǐshǒujiān mìmǎ shì duōshao','시셔우지엔 미마 스 뚜어샤오'], ja:['トイレの暗証番号は何ですか？','トイレのあんしょうばんごうはなんですか','toire no anshou bangou wa nan desu ka','토이레노 안쇼-방고-와 난데스까'], es:['¿Cuál es el código del baño?','꾸알 에스 엘 꼬디고 델 바뇨'], th:['รหัสห้องน้ำคืออะไร{p}','rahat hong nam khue arai {p}','라핫 헝남 크- 아라이 {p}']},
+  {ko:'콘센트 있어요?', en:['Is there an outlet?','이즈 데어 언 아웃렛'], zh:['有插座吗？','yǒu chāzuò ma','여우 차쭤 마'], ja:['コンセントはありますか？','コンセントはありますか','konsento wa arimasu ka','콘센또와 아리마스까'], es:['¿Hay un enchufe?','아이 운 엔추페'], th:['มีปลั๊กไฟไหม{p}','mi plak fai mai {p}','미- 쁠락파이 마이 {p}']}
+ ]},
+ {name:'관광·마사지', items:[
+  {ko:'입장료가 얼마예요?', en:['How much is the entrance fee?','하우 머치 이즈 디 엔트런스 피'], zh:['门票多少钱？','ménpiào duōshao qián','먼퍄오 뚜어샤오 치엔'], ja:['入場料はいくらですか？','にゅうじょうりょうはいくらですか','nyuujouryou wa ikura desu ka','뉴-죠-료-와 이꾸라데스까'], es:['¿Cuánto cuesta la entrada?','꾸안또 꾸에스따 라 엔뜨라다'], th:['ค่าเข้าเท่าไหร่{p}','kha khao thao rai {p}','카- 카오 타오라이 {p}']},
+  {ko:'몇 시에 닫아요?', en:['What time do you close?','왓 타임 두 유 클로즈'], zh:['几点关门？','jǐ diǎn guānmén','지 디엔 꽌먼'], ja:['何時に閉まりますか？','なんじにしまりますか','nanji ni shimarimasu ka','난지니 시마리마스까'], es:['¿A qué hora cierran?','아 께 오라 시에란'], th:['ปิดกี่โมง{p}','pit ki mong {p}','삣 끼-몽 {p}']},
+  {ko:'사진 좀 찍어 주실래요?', en:['Could you take a picture of us?','쿠쥬 테익 어 픽처 오브 어스'], zh:['能帮我们拍张照吗？','néng bāng wǒmen pāi zhāng zhào ma','넝 빵 워먼 파이 짱 짜오 마'], ja:['写真を撮ってもらえますか？','しゃしんをとってもらえますか','shashin o totte moraemasu ka','샤싱오 돗떼 모라에마스까'], es:['¿Nos puede tomar una foto?','노스 뿌에데 또마르 우나 포또'], th:['ช่วยถ่ายรูปให้หน่อยได้ไหม{p}','chuai thai rup hai noi dai mai {p}','추어이 타-이 룹- 하이 너이 다이마이 {p}']},
+  {ko:'여기서 사진 찍어도 돼요?', en:['Can I take pictures here?','캔 아이 테익 픽처스 히어'], zh:['这里可以拍照吗？','zhèlǐ kěyǐ pāizhào ma','쩌리 커이 파이짜오 마'], ja:['ここで写真を撮ってもいいですか？','ここでしゃしんをとってもいいですか','koko de shashin o totte mo ii desu ka','고꼬데 샤싱오 돗떼모 이-데스까'], es:['¿Puedo tomar fotos aquí?','뿌에도 또마르 포또스 아끼'], th:['ถ่ายรูปที่นี่ได้ไหม{p}','thai rup thi ni dai mai {p}','타-이 룹- 티-니- 다이마이 {p}']},
+  {ko:'발 마사지 한 시간 해 주세요', en:['A one-hour foot massage, please.','어 원 아워 풋 마사지, 플리즈'], zh:['做一个小时足疗。','zuò yí ge xiǎoshí zúliáo','쭤 이거 샤오스 주랴오'], ja:['足つぼマッサージを一時間お願いします。','あしつぼマッサージをいちじかんおねがいします','ashitsubo massaaji o ichijikan onegai shimasu','아시쯔보 맛사-지오 이찌지깡 오네가이시마스'], es:['Un masaje de pies de una hora, por favor.','운 마사헤 데 삐에스 데 우나 오라, 뽀르 파보르'], th:['นวดเท้าหนึ่งชั่วโมง{p}','nuat thao nueng chuamong {p}','누엇 타-오 능 추어몽 {p}']},
+  {ko:'좀 더 세게 해 주세요', en:['A little stronger, please.','어 리틀 스트롱거, 플리즈'], zh:['重一点。','zhòng yìdiǎn','중 이디엔'], ja:['もう少し強くお願いします。','もうすこしつよくおねがいします','mou sukoshi tsuyoku onegai shimasu','모- 스꼬시 쯔요꾸 오네가이시마스'], es:['Un poco más fuerte, por favor.','운 뽀꼬 마스 푸에르떼, 뽀르 파보르'], th:['แรงขึ้นอีกนิด{p}','raeng khuen ik nit {p}','랭- 큰 익- 닛 {p}']},
+  {ko:'살살 해 주세요', en:['A little softer, please.','어 리틀 소프터, 플리즈'], zh:['轻一点。','qīng yìdiǎn','칭 이디엔'], ja:['もう少し弱くお願いします。','もうすこしよわくおねがいします','mou sukoshi yowaku onegai shimasu','모- 스꼬시 요와꾸 오네가이시마스'], es:['Un poco más suave, por favor.','운 뽀꼬 마스 수아베, 뽀르 파보르'], th:['เบาๆ หน่อย{p}','bao bao noi {p}','바오바오 너이 {p}']}
+ ]},
+ {name:'약국·아플 때', items:[
+  {ko:'약국이 어디예요?', en:['Where is a pharmacy?','웨어 이즈 어 파머시'], zh:['药店在哪里？','yàodiàn zài nǎlǐ','야오띠엔 짜이 나리'], ja:['薬局はどこですか？','やっきょくはどこですか','yakkyoku wa doko desu ka','약꾜꾸와 도꼬데스까'], es:['¿Dónde hay una farmacia?','돈데 아이 우나 파르마시아'], th:['ร้านขายยาอยู่ที่ไหน{p}','ran khai ya yu thi nai {p}','란- 카이야- 유- 티-나이 {p}']},
+  {ko:'두통약 주세요', en:['Something for a headache, please.','썸띵 포 어 헤드에익, 플리즈'], zh:['我要头痛药。','wǒ yào tóutòng yào','워 야오 터우퉁 야오'], ja:['頭痛薬をください。','ずつうやくをください','zutsuuyaku o kudasai','즈쯔-야꾸오 구다사이'], es:['Algo para el dolor de cabeza, por favor.','알고 빠라 엘 돌로르 데 까베사, 뽀르 파보르'], th:['ขอยาแก้ปวดหัว{p}','kho ya kae puat hua {p}','커- 야- 깨- 뿌엇 후어 {p}']},
+  {ko:'감기에 걸렸어요', en:['I have a cold.','아이 해브 어 콜드'], zh:['我感冒了。','wǒ gǎnmào le','워 간마오 러'], ja:['風邪をひきました。','かぜをひきました','kaze o hikimashita','가제오 히끼마시따'], es:['Estoy resfriado.','에스또이 레스프리아도'], th:['เป็นหวัด{p}','pen wat {p}','뻰 왓 {p}']},
+  {ko:'열이 나요', en:['I have a fever.','아이 해브 어 피버'], zh:['我发烧了。','wǒ fāshāo le','워 파샤오 러'], ja:['熱があります。','ねつがあります','netsu ga arimasu','네쯔가 아리마스'], es:['Tengo fiebre.','뗑고 피에브레'], th:['มีไข้{p}','mi khai {p}','미- 카이 {p}']},
+  {ko:'하루에 몇 번 먹어요?', en:['How many times a day should I take it?','하우 매니 타임즈 어 데이 슈드 아이 테익 잇'], zh:['一天吃几次？','yì tiān chī jǐ cì','이 티엔 츠 지 츠'], ja:['一日何回飲みますか？','いちにちなんかいのみますか','ichinichi nankai nomimasu ka','이찌니찌 난까이 노미마스까'], es:['¿Cuántas veces al día?','꾸안따스 베세스 알 디아'], th:['กินวันละกี่ครั้ง{p}','kin wan la ki khrang {p}','낀 완라 끼- 크랑 {p}']}
+ ]},
+ {name:'친해지기', items:[
+  {ko:'만나서 반가워요', en:['Nice to meet you.','나이스 투 밋 유'], zh:['很高兴认识你。','hěn gāoxìng rènshi nǐ','헌 까오싱 런스 니'], ja:['はじめまして。','はじめまして','hajimemashite','하지메마시떼'], es:['Mucho gusto.','무초 구스또'], th:['ยินดีที่ได้รู้จัก{p}','yindi thi dai ruchak {p}','인디- 티-다이 루-짝 {p}']},
+  {ko:'이름이 뭐예요?', en:["What's your name?",'왓츠 유어 네임'], zh:['你叫什么名字？','nǐ jiào shénme míngzi','니 쨔오 션머 밍즈'], ja:['お名前は何ですか？','おなまえはなんですか','onamae wa nan desu ka','오나마에와 난데스까'], es:['¿Cómo se llama?','꼬모 세 야마'], th:['ชื่ออะไร{p}','chue arai {p}','츠- 아라이 {p}']},
+  {ko:'여행 중이에요', en:["I'm traveling.",'아임 트래블링'], zh:['我在旅行。','wǒ zài lǚxíng','워 짜이 뤼싱'], ja:['旅行中です。','りょこうちゅうです','ryokouchuu desu','료꼬-츄- 데스'], es:['Estoy de viaje.','에스또이 데 비아헤'], th:['กำลังเที่ยวอยู่{p}','kamlang thiao yu {p}','깜랑 티여우 유- {p}']},
+  {ko:'여기 정말 좋아요', en:['I really like it here.','아이 리얼리 라익 잇 히어'], zh:['我很喜欢这里。','wǒ hěn xǐhuan zhèlǐ','워 헌 시환 쩌리'], ja:['ここが本当に好きです。','ここがほんとうにすきです','koko ga hontou ni suki desu','고꼬가 혼또-니 스끼데스'], es:['Me encanta este lugar.','메 엔깐따 에스떼 루가르'], th:['ชอบที่นี่มาก{p}','chop thi ni mak {p}','첩- 티-니- 막- {p}']},
+  {ko:'날씨 좋네요', en:['Nice weather today.','나이스 웨더 투데이'], zh:['今天天气真好。','jīntiān tiānqì zhēn hǎo','진티엔 티엔치 쩐 하오'], ja:['いい天気ですね。','いいてんきですね','ii tenki desu ne','이- 텡끼데스네'], es:['Hace buen tiempo.','아세 부엔 띠엠뽀'], th:['อากาศดีนะ{p}','akat di na {p}','아-깟 디- 나 {p}']},
+  {ko:'이 근처에 맛집 있어요?', en:['Any good restaurants around here?','애니 굿 레스토랑츠 어라운드 히어'], zh:['附近有好吃的餐厅吗？','fùjìn yǒu hǎochī de cāntīng ma','푸진 여우 하오츠 더 찬팅 마'], ja:['この近くにおいしい店はありますか？','このちかくにおいしいみせはありますか','kono chikaku ni oishii mise wa arimasu ka','고노 치까꾸니 오이시- 미세와 아리마스까'], es:['¿Hay algún buen restaurante por aquí?','아이 알군 부엔 레스따우란떼 뽀르 아끼'], th:['แถวนี้มีร้านอร่อยไหม{p}','thaeo ni mi ran aroi mai {p}','태-우니- 미- 란- 아러이 마이 {p}']},
+  {ko:'건배!', en:['Cheers!','치어스'], zh:['干杯！','gānbēi','깐뻬이'], ja:['乾杯！','かんぱい','kanpai','깜빠이'], es:['¡Salud!','살룻'], th:['ชนแก้ว','chon kaeo','촌깨-우']}
+ ]}
+];
+
+/* ---------- 상태 ---------- */
+const KEY = 'travelTalk.v1';
+let S = {lang:'en', cat:'t', mode:'study', gender:'m', best:{}, today:null};
+try { Object.assign(S, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch(e) {}
+if (S.cat !== 't' && !CATS[S.cat]) S.cat = 't';
+function save(){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e) {} }
+
+/* ---------- 오늘의 5문장: 날짜마다 바뀌고, 안 통과한 문장 4개 + 통과한 문장 1개(복습) ---------- */
+function todayStr(){ const d = new Date(); return d.getFullYear() + '-' + (d.getMonth()+1) + '-' + d.getDate(); }
+function seeded(seed){
+  let h = 1779033703;
+  for (const c of seed) h = Math.imul(h ^ c.charCodeAt(0), 3432918353), h = h << 13 | h >>> 19;
+  return () => { h = Math.imul(h ^ h >>> 16, 2246822507); h = Math.imul(h ^ h >>> 13, 3266489909); h ^= h >>> 16; return (h >>> 0) / 4294967296; };
+}
+function pickToday(reroll){
+  const ds = todayStr();
+  if (!S.today || S.today.date !== ds) S.today = {date:ds, roll:0, picks:{}};
+  if (reroll){ S.today.roll++; delete S.today.picks[S.lang]; }
+  if (!S.today.picks[S.lang]){
+    const rnd = seeded(ds + S.lang + S.today.roll);
+    const keys = [];
+    CATS.forEach((c,ci) => c.items.forEach((_,i) => keys.push(ci + '|' + i)));
+    for (let i = keys.length - 1; i > 0; i--){ const j = Math.floor(rnd() * (i+1)); [keys[i], keys[j]] = [keys[j], keys[i]]; }
+    const passed = k => (S.best[S.lang + '|' + k] || 0) >= 70;
+    const fresh = keys.filter(k => !passed(k)), done = keys.filter(passed);
+    const picks = fresh.slice(0, done.length ? 4 : 5);
+    for (const k of done){ if (picks.length >= 5) break; picks.push(k); }
+    S.today.picks[S.lang] = picks;
+    save();
+  }
+  return S.today.picks[S.lang];
+}
+
+/* ---------- 태국어 어미 ---------- */
+const TH_Q = /(ไหม|ไหน|อะไร|อะไรดี|เท่าไหร่|กี่โมง|กี่ครั้ง)$/;
+function thai(item){
+  const [t, r, k] = item.th;
+  if (!t.includes('{p}')) return {text:t, roman:r, pron:k};
+  const base = t.replace('{p}','');
+  const fem = TH_Q.test(base) ? ['คะ','kha','카'] : ['ค่ะ','kha','카'];
+  const p = S.gender === 'm' ? ['ครับ','khrap','크랍'] : fem;
+  return {text: base + p[0], roman: r.replace('{p}', p[1]), pron: k.replace('{p}', p[2])};
+}
+function view(item, lang){
+  const d = item[lang];
+  if (lang === 'en' || lang === 'es') return {text:d[0], pron:d[1], roman:'', alts:[d[0]]};
+  if (lang === 'zh') return {text:d[0], roman:d[1], pron:d[2], alts:[d[0]]};
+  if (lang === 'ja') return {text:d[0], roman:d[2], pron:d[3], alts:[d[0], d[1]]};
+  const t = thai(item); return {text:t.text, roman:t.roman, pron:t.pron, alts:[t.text]};
+}
+
+/* ---------- 음성 출력 ---------- */
+let voices = [];
+function loadVoices(){ voices = speechSynthesis.getVoices(); updateVoiceInfo(); }
+if ('speechSynthesis' in window){ loadVoices(); speechSynthesis.onvoiceschanged = loadVoices; }
+function pickVoice(code){
+  const pre = code.slice(0,2).toLowerCase();
+  const list = voices.filter(v => v.lang.replace('_','-').toLowerCase().startsWith(pre));
+  const exact = list.filter(v => v.lang.replace('_','-').toLowerCase() === code.toLowerCase());
+  const pool = exact.length ? exact : list;
+  return pool.find(v => /natural/i.test(v.name)) || pool.find(v => /online|google/i.test(v.name)) || pool[0] || null;
+}
+function speak(text, rate){
+  if (!('speechSynthesis' in window)) return;
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text.replace(/[¿¡]/g,''));
+  const code = LANGS[S.lang].code;
+  u.lang = code; u.rate = rate;
+  const v = pickVoice(code); if (v) u.voice = v;
+  speechSynthesis.speak(u);
+}
+function updateVoiceInfo(){
+  const el = document.getElementById('voiceTxt');
+  if (!el) return;
+  const v = pickVoice(LANGS[S.lang].code);
+  el.className = 'voice' + (v ? '' : ' missing');
+  el.textContent = v ? '음성: ' + v.name.replace(/^Microsoft /,'').replace(/ - .*$/,'').slice(0,40)
+                     : LANGS[S.lang].name + ' 음성이 없어요. Edge에서 열면 대부분 들어 있어요.';
+}
+
+/* ---------- 채점 ---------- */
+function units(s, lang){
+  s = s.toLowerCase();
+  if (lang === 'th') s = s.replace(/ครับ|ค่ะ|คะ|ค่า/g, '');
+  if (LANGS[lang].words){
+    s = s.normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9'ñ\s-]/g,' ').replace(/-/g,' ');
+    return s.split(/\s+/).filter(Boolean).map(w => w.replace(/'/g,''));
+  }
+  return Array.from(s.replace(/[\s\p{P}\p{S}]/gu, ''));
+}
+function lev(a, b){
+  const m = a.length, n = b.length; if (!m) return n; if (!n) return m;
+  let prev = Array.from({length:n+1}, (_,j)=>j);
+  for (let i=1;i<=m;i++){
+    const cur = [i];
+    for (let j=1;j<=n;j++) cur[j] = Math.min(prev[j]+1, cur[j-1]+1, prev[j-1] + (a[i-1]===b[j-1]?0:1));
+    prev = cur;
+  }
+  return prev[n];
+}
+function lcsMask(t, h){
+  const m=t.length, n=h.length, dp=Array.from({length:m+1},()=>new Array(n+1).fill(0));
+  for (let i=m-1;i>=0;i--) for (let j=n-1;j>=0;j--) dp[i][j] = t[i]===h[j] ? dp[i+1][j+1]+1 : Math.max(dp[i+1][j], dp[i][j+1]);
+  const mask = new Array(m).fill(false); let i=0,j=0;
+  while(i<m && j<n){ if (t[i]===h[j]){ mask[i]=true; i++; j++; } else if (dp[i+1][j] >= dp[i][j+1]) i++; else j++; }
+  return mask;
+}
+function grade(alts, heardList, lang){
+  let best = {score:-1};
+  for (const target of alts){
+    const t = units(target, lang);
+    for (const heard of heardList){
+      const h = units(heard, lang);
+      const score = Math.max(0, Math.round((1 - lev(t,h) / Math.max(t.length, h.length, 1)) * 100));
+      if (score > best.score) best = {score, t, heard, mask: lcsMask(t,h)};
+    }
+  }
+  return best;
+}
+
+/* ---------- 말하기 (음성 인식 + 내 목소리 녹음) ---------- */
+/* 다른 페이지 안(iframe)에 들어가 있으면 마이크가 막히므로 말하기를 숨긴다. 웹호스팅·PC 파일에서는 사용 가능. */
+let CAN_MIC = true;
+try { CAN_MIC = window.top === window; } catch(e) { CAN_MIC = false; }
+const IS_MOBILE = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+const SR = CAN_MIC ? (window.SpeechRecognition || window.webkitSpeechRecognition) : null;
+let active = null;
+async function startRecord(){
+  if (IS_MOBILE) return null; // 핸드폰은 녹음과 음성 인식을 동시에 하면 인식이 끊길 수 있어 녹음 생략
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({audio:true});
+    const rec = new MediaRecorder(stream), chunks = [];
+    rec.ondataavailable = e => chunks.push(e.data);
+    rec.start();
+    return {stop: () => new Promise(res => {
+      rec.onstop = () => { stream.getTracks().forEach(t => t.stop()); res(URL.createObjectURL(new Blob(chunks, {type: rec.mimeType}))); };
+      rec.stop();
+    })};
+  } catch(e) { return null; }
+}
+async function listen(card, key, v, btn){
+  const box = card.querySelector('.result');
+  if (!SR){ box.classList.add('show'); box.innerHTML = '이 브라우저는 음성 인식을 지원하지 않아요. <b>Edge</b>나 <b>Chrome</b>에서 열어 주세요.'; return; }
+  if (active){ active.stop(); return; }
+  speechSynthesis.cancel();
+  const r = new SR();
+  r.lang = LANGS[S.lang].code; r.interimResults = true; r.maxAlternatives = 5; r.continuous = false;
+  active = r;
+  btn.classList.add('on'); btn.textContent = '듣는 중… (누르면 멈춤)';
+  box.classList.add('show'); box.innerHTML = '<span class="heard">말해 보세요…</span>';
+  const recorder = await startRecord();
+  let finalAlts = null;
+  r.onresult = e => {
+    const res = e.results[e.results.length-1];
+    if (res.isFinal){ finalAlts = Array.from(res).map(a => a.transcript); }
+    else box.innerHTML = '<span class="heard">들리는 말: ' + esc(res[0].transcript) + '</span>';
+  };
+  r.onerror = e => {
+    const msg = {'not-allowed': IS_MOBILE ? '마이크 권한이 꺼져 있어요. Chrome 주소창 왼쪽 아이콘 > 권한에서 마이크를 허용해 주세요.' : '마이크 권한이 꺼져 있어요. 주소창 왼쪽 자물쇠 아이콘에서 마이크를 허용해 주세요.',
+                 'no-speech':'소리가 안 들렸어요. 마이크에 조금 더 가까이 대고 다시 해 보세요.',
+                 'network':'음성 인식은 인터넷 연결이 필요해요.',
+                 'audio-capture':'마이크를 찾지 못했어요. 이어폰 마이크나 노트북 마이크를 확인해 주세요.',
+                 'language-not-supported':'이 브라우저에서는 ' + LANGS[S.lang].name + ' 인식을 지원하지 않아요. Chrome으로 열어 보세요.'}[e.error];
+    if (msg) box.innerHTML = msg;
+  };
+  r.onend = async () => {
+    active = null;
+    btn.classList.remove('on'); btn.textContent = '말하기';
+    const url = recorder ? await recorder.stop() : null;
+    if (!finalAlts) { if (box.textContent.startsWith('말해 보세요')) box.innerHTML = '소리가 안 들렸어요. 다시 눌러서 말해 보세요.'; return; }
+    const g = grade(v.alts, finalAlts, S.lang);
+    showResult(card, key, g, url);
+  };
+  r.start();
+}
+function showResult(card, key, g, url){
+  const box = card.querySelector('.result');
+  const cls = g.score >= 85 ? 's-good' : g.score >= 70 ? 's-good' : g.score >= 40 ? 's-warn' : 's-bad';
+  const msg = g.score >= 90 ? '완벽해요! 현지인이 바로 알아들을 거예요.'
+            : g.score >= 70 ? '통과! 충분히 통해요.'
+            : g.score >= 40 ? '거의 다 왔어요. 빨간 부분만 다시 들어 보세요.'
+            : '천천히 버튼으로 한 번 더 듣고 따라 해 보세요.';
+  const sep = LANGS[S.lang].words ? ' ' : '';
+  const diff = g.t.map((u,i) => '<span class="' + (g.mask[i] ? 'ok' : 'miss') + '">' + esc(u) + '</span>').join(sep);
+  box.innerHTML = '<span class="score ' + cls + '">' + g.score + '점</span>' + msg +
+    '<div class="diff">' + diff + '</div>' +
+    '<div class="heard">인식된 말: ' + esc(g.heard) + '</div>';
+  if (url){
+    const b = document.createElement('button'); b.className = 'act'; b.style.marginTop = '8px'; b.textContent = '내 목소리 다시 듣기';
+    const a = new Audio(url); b.onclick = () => { speechSynthesis.cancel(); a.currentTime = 0; a.play(); };
+    box.appendChild(b);
+  }
+  if (g.score > (S.best[key] || 0)){ S.best[key] = g.score; save(); }
+  card.classList.add('open');
+  refreshCard(card, key);
+  updateProgress();
+  if (S.cat === 't'){
+    const span = document.querySelector('.today-head span');
+    const picks = pickToday(false);
+    const n = picks.filter(k => (S.best[S.lang+'|'+k]||0) >= 70).length;
+    if (span) span.textContent = todayStr().replace(/-/g,'.') + ' · ' + n + '/' + picks.length + ' 통과';
+  }
+}
+function esc(s){ return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+/* ---------- 화면 ---------- */
+function chip(label, pressed, onClick){
+  const b = document.createElement('button'); b.className = 'chip'; b.textContent = label;
+  b.setAttribute('aria-pressed', pressed ? 'true' : 'false'); b.onclick = onClick; return b;
+}
+function renderBars(){
+  const fill = (id, entries) => {
+    const row = document.getElementById(id);
+    row.querySelectorAll('.chip').forEach(c => c.remove());
+    entries.forEach(e => row.appendChild(e));
+  };
+  fill('langRow', Object.entries(LANGS).map(([k,l]) => chip(l.name, S.lang===k, () => { S.lang=k; save(); renderAll(); })));
+  fill('catRow', [chip('오늘의 5문장', S.cat==='t', () => { S.cat='t'; save(); renderAll(); })]
+    .concat(CATS.map((c,i) => chip(c.name, S.cat===i, () => { S.cat=i; save(); renderAll(); }))));
+  fill('modeRow', Object.entries(MODES).map(([k,n]) => chip(n, S.mode===k, () => { S.mode=k; save(); renderAll(); })));
+  const th = document.getElementById('thaiRow');
+  th.hidden = S.lang !== 'th';
+  fill('thaiRow', [chip('남성 (크랍)', S.gender==='m', () => { S.gender='m'; save(); renderAll(); }),
+                   chip('여성 (카)', S.gender==='f', () => { S.gender='f'; save(); renderAll(); })]);
+  document.body.className = 'm-' + S.mode;
+}
+function refreshCard(card, key){
+  const b = S.best[key] || 0;
+  card.classList.toggle('passed', b >= 70);
+  card.querySelector('.best').innerHTML = b ? '최고 <b>' + b + '점</b>' : '아직 안 해봤어요';
+}
+function renderList(){
+  const list = document.getElementById('list'); list.innerHTML = '';
+  const isToday = S.cat === 't';
+  const entries = isToday
+    ? pickToday(false).map(k => k.split('|').map(Number)).filter(([ci,i]) => CATS[ci] && CATS[ci].items[i])
+    : CATS[S.cat].items.map((_,i) => [S.cat, i]);
+  if (isToday){
+    const head = document.createElement('div'); head.className = 'today-head';
+    const n = entries.filter(([ci,i]) => (S.best[S.lang+'|'+ci+'|'+i]||0) >= 70).length;
+    head.innerHTML = '<div><b>오늘의 5문장</b> <span>' + todayStr().replace(/-/g,'.') + ' · ' + n + '/' + entries.length + ' 통과</span></div>';
+    const b = document.createElement('button'); b.className = 'act'; b.textContent = '다른 5문장';
+    b.onclick = () => { pickToday(true); renderList(); };
+    head.appendChild(b); list.appendChild(head);
+  }
+  entries.forEach(([ci, idx]) => {
+    const item = CATS[ci].items[idx];
+    const v = view(item, S.lang);
+    const key = S.lang + '|' + ci + '|' + idx;
+    const card = document.createElement('article'); card.className = 'card';
+    const hint = S.mode === 'listen' ? '소리만 듣고 무슨 뜻인지 맞혀 보세요' : '한국어를 보고 ' + LANGS[S.lang].name + '로 말해 보세요';
+    card.innerHTML =
+      '<div class="main">' +
+        (isToday ? '<div class="tag">' + esc(CATS[ci].name) + '</div>' : '') +
+        '<div class="ko">' + esc(item.ko) + '</div>' +
+        '<div class="target" lang="' + LANGS[S.lang].code + '">' + esc(v.text) + '</div>' +
+        '<div class="pron">' + esc(v.pron) + '</div>' +
+        (v.roman ? '<div class="roman">' + esc(v.roman) + '</div>' : '') +
+        '<div class="hidden-box">' + hint + '</div>' +
+      '</div>' +
+      '<div class="stub">' +
+        '<button class="act" data-a="play">듣기</button>' +
+        '<button class="act" data-a="slow">천천히</button>' +
+        (CAN_MIC ? '<button class="act mic" data-a="mic">말하기</button>' : '') +
+        '<button class="act reveal" data-a="reveal">정답 보기</button>' +
+        '<span class="best"></span>' +
+      '</div>' +
+      '<div class="result"></div>';
+    card.querySelector('[data-a=play]').onclick = () => speak(v.text, 0.95);
+    card.querySelector('[data-a=slow]').onclick = () => speak(v.text, 0.6);
+    if (CAN_MIC) card.querySelector('[data-a=mic]').onclick = e => listen(card, key, v, e.currentTarget);
+    card.querySelector('[data-a=reveal]').onclick = () => card.classList.toggle('open');
+    refreshCard(card, key);
+    list.appendChild(card);
+  });
+}
+function updateProgress(){
+  let total = 0, passed = 0;
+  CATS.forEach((c,ci) => c.items.forEach((_,i) => { total++; if ((S.best[S.lang+'|'+ci+'|'+i]||0) >= 70) passed++; }));
+  document.getElementById('progTxt').textContent = LANGS[S.lang].name + ' 통과 ' + passed + '/' + total;
+  document.getElementById('progFill').style.width = (passed/total*100) + '%';
+}
+function renderAll(){ renderBars(); renderList(); updateProgress(); updateVoiceInfo(); }
+
+if (!CAN_MIC){
+  const w = document.getElementById('warn'); w.classList.add('show');
+  w.textContent = '이 화면은 듣기·읽기 전용이에요. 말하기 채점은 이 페이지 주소를 브라우저에서 직접 열면 할 수 있어요.';
+} else if (!SR){
+  const w = document.getElementById('warn'); w.classList.add('show');
+  w.textContent = IS_MOBILE
+    ? '이 브라우저에서는 말하기 채점이 안 돼요. 아이폰은 Safari, 갤럭시는 Chrome으로 열어 주세요. 듣기와 읽기는 그대로 쓸 수 있어요.'
+    : '이 브라우저에서는 말하기 채점이 안 돼요. Microsoft Edge 또는 Chrome으로 열어 주세요. 듣기와 읽기는 그대로 쓸 수 있어요.';
+}
+renderAll();
+</script>
+</body>
+</html>
