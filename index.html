@@ -66,6 +66,8 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .today-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
 .today-head b{font:400 22px/1.2 var(--display)}
 .today-head span{color:var(--muted);font-size:13px;margin-left:6px}
+.levels{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.levels > span{margin:0 2px 0 0}
 .target{font:600 24px/1.35 var(--target);margin:2px 0;word-break:keep-all;overflow-wrap:anywhere}
 .pron{font-size:17px;font-weight:700;color:var(--accent)}
 .roman{font-size:13px;color:var(--muted);font-style:italic}
@@ -128,7 +130,7 @@ body.m-listen .act.reveal,body.m-speak .act.reveal{display:flex}
       <li>통과한 문장은 <b>말하기 연습</b> 모드에서 한국어만 보고 떠올려 봐요.</li>
       <li>마지막으로 <b>듣기 연습</b> 모드에서 소리만 듣고 뜻을 맞혀 봐요.</li>
     </ol>
-    <p>매일 "오늘의 5문장"만 해도 충분해요. 날짜가 바뀌면 새 문장이 나오고, 통과한 문장도 하나씩 복습으로 섞여 나와요.</p>
+    <p>매일 "오늘의 문장"만 해도 충분해요. 하루 분량은 하(5문장, 짧은 문장) · 중(10문장) · 상(15문장, 긴 문장까지)에서 고를 수 있어요. 날짜가 바뀌면 새 문장이 나오고, 통과한 문장도 복습으로 섞여 나와요.</p>
   </details>
 
   <div class="warnbox" id="warn"></div>
@@ -286,12 +288,21 @@ const CATS = [
 
 /* ---------- 상태 ---------- */
 const KEY = 'travelTalk.v1';
-let S = {lang:'en', cat:'t', mode:'study', gender:'m', best:{}, today:null};
+let S = {lang:'en', cat:'t', mode:'study', gender:'m', level:'low', best:{}, today:null};
 try { Object.assign(S, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch(e) {}
 if (S.cat !== 't' && !CATS[S.cat]) S.cat = 't';
 function save(){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e) {} }
 
-/* ---------- 오늘의 5문장: 날짜마다 바뀌고, 안 통과한 문장 4개 + 통과한 문장 1개(복습) ---------- */
+/* ---------- 오늘의 문장: 날짜마다 바뀌고, 안 통과한 새 문장 + 통과한 문장 몇 개(복습) ----------
+   하: 5문장, 짧은 문장 / 중: 10문장, 짧은·보통 문장 / 상: 15문장, 긴 문장까지 */
+const LEVELS = {
+  low:  {name:'하', n:5,  maxDiff:1, review:1},
+  mid:  {name:'중', n:10, maxDiff:2, review:2},
+  high: {name:'상', n:15, maxDiff:3, review:3}
+};
+if (!LEVELS[S.level]) S.level = 'low';
+// 문장 길이(영어 단어 수)로 난이도: 1=짧음, 2=보통, 3=김
+function diff(item){ const w = item.en[0].split(/\s+/).length; return w <= 3 ? 1 : w <= 5 ? 2 : 3; }
 function todayStr(){ const d = new Date(); return d.getFullYear() + '-' + (d.getMonth()+1) + '-' + d.getDate(); }
 function seeded(seed){
   let h = 1779033703;
@@ -301,20 +312,23 @@ function seeded(seed){
 function pickToday(reroll){
   const ds = todayStr();
   if (!S.today || S.today.date !== ds) S.today = {date:ds, roll:0, picks:{}};
-  if (reroll){ S.today.roll++; delete S.today.picks[S.lang]; }
-  if (!S.today.picks[S.lang]){
-    const rnd = seeded(ds + S.lang + S.today.roll);
+  const slot = S.lang + '|' + S.level, L = LEVELS[S.level];
+  if (reroll){ S.today.roll++; delete S.today.picks[slot]; }
+  if (!S.today.picks[slot]){
+    const rnd = seeded(ds + slot + S.today.roll);
     const keys = [];
-    CATS.forEach((c,ci) => c.items.forEach((_,i) => keys.push(ci + '|' + i)));
+    CATS.forEach((c,ci) => c.items.forEach((it,i) => keys.push({k: ci + '|' + i, d: diff(it)})));
     for (let i = keys.length - 1; i > 0; i--){ const j = Math.floor(rnd() * (i+1)); [keys[i], keys[j]] = [keys[j], keys[i]]; }
+    // 내 수준에 맞는 문장을 먼저, 모자라면 다른 문장으로 채움
+    keys.sort((a,b) => (a.d > L.maxDiff) - (b.d > L.maxDiff));
     const passed = k => (S.best[S.lang + '|' + k] || 0) >= 70;
-    const fresh = keys.filter(k => !passed(k)), done = keys.filter(passed);
-    const picks = fresh.slice(0, done.length ? 4 : 5);
-    for (const k of done){ if (picks.length >= 5) break; picks.push(k); }
-    S.today.picks[S.lang] = picks;
+    const fresh = keys.filter(x => !passed(x.k)).map(x => x.k), done = keys.filter(x => passed(x.k)).map(x => x.k);
+    const picks = fresh.slice(0, L.n - Math.min(L.review, done.length));
+    for (const k of done){ if (picks.length >= L.n) break; picks.push(k); }
+    S.today.picks[slot] = picks;
     save();
   }
-  return S.today.picks[S.lang];
+  return S.today.picks[slot];
 }
 
 /* ---------- 태국어 어미 ---------- */
@@ -481,7 +495,7 @@ function showResult(card, key, g, url){
   refreshCard(card, key);
   updateProgress();
   if (S.cat === 't'){
-    const span = document.querySelector('.today-head span');
+    const span = document.querySelector('.today-head > div > span');
     const picks = pickToday(false);
     const n = picks.filter(k => (S.best[S.lang+'|'+k]||0) >= 70).length;
     if (span) span.textContent = todayStr().replace(/-/g,'.') + ' · ' + n + '/' + picks.length + ' 통과';
@@ -501,7 +515,7 @@ function renderBars(){
     entries.forEach(e => row.appendChild(e));
   };
   fill('langRow', Object.entries(LANGS).map(([k,l]) => chip(l.name, S.lang===k, () => { S.lang=k; save(); renderAll(); })));
-  fill('catRow', [chip('오늘의 5문장', S.cat==='t', () => { S.cat='t'; save(); renderAll(); })]
+  fill('catRow', [chip('오늘의 문장', S.cat==='t', () => { S.cat='t'; save(); renderAll(); })]
     .concat(CATS.map((c,i) => chip(c.name, S.cat===i, () => { S.cat=i; save(); renderAll(); }))));
   fill('modeRow', Object.entries(MODES).map(([k,n]) => chip(n, S.mode===k, () => { S.mode=k; save(); renderAll(); })));
   const th = document.getElementById('thaiRow');
@@ -524,10 +538,14 @@ function renderList(){
   if (isToday){
     const head = document.createElement('div'); head.className = 'today-head';
     const n = entries.filter(([ci,i]) => (S.best[S.lang+'|'+ci+'|'+i]||0) >= 70).length;
-    head.innerHTML = '<div><b>오늘의 5문장</b> <span>' + todayStr().replace(/-/g,'.') + ' · ' + n + '/' + entries.length + ' 통과</span></div>';
-    const b = document.createElement('button'); b.className = 'act'; b.textContent = '다른 5문장';
+    head.innerHTML = '<div><b>오늘의 문장</b> <span>' + todayStr().replace(/-/g,'.') + ' · ' + n + '/' + entries.length + ' 통과</span></div>';
+    const ctl = document.createElement('div'); ctl.className = 'levels';
+    const lab = document.createElement('span'); lab.textContent = '하루 분량'; ctl.appendChild(lab);
+    Object.entries(LEVELS).forEach(([k,L]) => ctl.appendChild(chip(L.name + ' ' + L.n + '문장', S.level===k, () => { S.level=k; save(); renderList(); })));
+    const b = document.createElement('button'); b.className = 'act'; b.textContent = '다른 문장으로';
     b.onclick = () => { pickToday(true); renderList(); };
-    head.appendChild(b); list.appendChild(head);
+    ctl.appendChild(b);
+    head.appendChild(ctl); list.appendChild(head);
   }
   entries.forEach(([ci, idx]) => {
     const item = CATS[ci].items[idx];
