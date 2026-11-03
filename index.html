@@ -68,6 +68,16 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .today-head span{color:var(--muted);font-size:13px;margin-left:6px}
 .levels{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
 .levels > span{margin:0 2px 0 0}
+a.act{text-decoration:none}
+.songbar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 16px}
+.songbar b{font-size:18px}
+.songbar span{color:var(--muted);font-size:13px;margin-left:6px}
+.songform{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;display:grid;gap:8px}
+.songform label{font-size:13px;font-weight:700}
+.songform input,.songform select,.songform textarea{font:inherit;font-size:16px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;width:100%}
+.songform textarea{resize:vertical;font-family:var(--target)}
+.songform .hint{margin:0;color:var(--muted);font-size:13px}
+.songform .err{margin:0;color:var(--bad);font-size:14px}
 .target{font:600 24px/1.35 var(--target);margin:2px 0;word-break:keep-all;overflow-wrap:anywhere}
 .pron{font-size:17px;font-weight:700;color:var(--accent)}
 .roman{font-size:13px;color:var(--muted);font-style:italic}
@@ -288,9 +298,10 @@ const CATS = [
 
 /* ---------- 상태 ---------- */
 const KEY = 'travelTalk.v1';
-let S = {lang:'en', cat:'t', mode:'study', gender:'m', level:'low', best:{}, today:null};
+let S = {lang:'en', cat:'t', mode:'study', gender:'m', level:'low', best:{}, today:null, songs:[], song:null};
 try { Object.assign(S, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch(e) {}
-if (S.cat !== 't' && !CATS[S.cat]) S.cat = 't';
+if (S.cat !== 't' && S.cat !== 's' && !CATS[S.cat]) S.cat = 't';
+if (!Array.isArray(S.songs)) S.songs = [];
 function save(){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e) {} }
 
 /* ---------- 오늘의 문장: 날짜마다 바뀌고, 안 통과한 새 문장 + 통과한 문장 몇 개(복습) ----------
@@ -360,11 +371,11 @@ function pickVoice(code){
   const pool = exact.length ? exact : list;
   return pool.find(v => /natural/i.test(v.name)) || pool.find(v => /online|google/i.test(v.name)) || pool[0] || null;
 }
-function speak(text, rate){
+function speak(text, rate, lang = S.lang){
   if (!('speechSynthesis' in window)) return;
   speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(text.replace(/[¿¡]/g,''));
-  const code = LANGS[S.lang].code;
+  const code = LANGS[lang].code;
   u.lang = code; u.rate = rate;
   const v = pickVoice(code); if (v) u.voice = v;
   speechSynthesis.speak(u);
@@ -443,8 +454,9 @@ async function listen(card, key, v, btn){
   if (!SR){ box.classList.add('show'); box.innerHTML = '이 브라우저는 음성 인식을 지원하지 않아요. <b>Edge</b>나 <b>Chrome</b>에서 열어 주세요.'; return; }
   if (active){ active.stop(); return; }
   speechSynthesis.cancel();
+  const lang = v.lang || S.lang;
   const r = new SR();
-  r.lang = LANGS[S.lang].code; r.interimResults = true; r.maxAlternatives = 5; r.continuous = false;
+  r.lang = LANGS[lang].code; r.interimResults = true; r.maxAlternatives = 5; r.continuous = false;
   active = r;
   btn.classList.add('on'); btn.textContent = '듣는 중… (누르면 멈춤)';
   box.classList.add('show'); box.innerHTML = '<span class="heard">말해 보세요…</span>';
@@ -460,7 +472,7 @@ async function listen(card, key, v, btn){
                  'no-speech':'소리가 안 들렸어요. 마이크에 조금 더 가까이 대고 다시 해 보세요.',
                  'network':'음성 인식은 인터넷 연결이 필요해요.',
                  'audio-capture':'마이크를 찾지 못했어요. 이어폰 마이크나 노트북 마이크를 확인해 주세요.',
-                 'language-not-supported':'이 브라우저에서는 ' + LANGS[S.lang].name + ' 인식을 지원하지 않아요. Chrome으로 열어 보세요.'}[e.error];
+                 'language-not-supported':'이 브라우저에서는 ' + LANGS[lang].name + ' 인식을 지원하지 않아요. Chrome으로 열어 보세요.'}[e.error];
     if (msg) box.innerHTML = msg;
   };
   r.onend = async () => {
@@ -468,19 +480,19 @@ async function listen(card, key, v, btn){
     btn.classList.remove('on'); btn.textContent = '말하기';
     const url = recorder ? await recorder.stop() : null;
     if (!finalAlts) { if (box.textContent.startsWith('말해 보세요')) box.innerHTML = '소리가 안 들렸어요. 다시 눌러서 말해 보세요.'; return; }
-    const g = grade(v.alts, finalAlts, S.lang);
-    showResult(card, key, g, url);
+    const g = grade(v.alts, finalAlts, lang);
+    showResult(card, key, g, url, lang);
   };
   r.start();
 }
-function showResult(card, key, g, url){
+function showResult(card, key, g, url, lang = S.lang){
   const box = card.querySelector('.result');
   const cls = g.score >= 85 ? 's-good' : g.score >= 70 ? 's-good' : g.score >= 40 ? 's-warn' : 's-bad';
   const msg = g.score >= 90 ? '완벽해요! 현지인이 바로 알아들을 거예요.'
             : g.score >= 70 ? '통과! 충분히 통해요.'
             : g.score >= 40 ? '거의 다 왔어요. 빨간 부분만 다시 들어 보세요.'
             : '천천히 버튼으로 한 번 더 듣고 따라 해 보세요.';
-  const sep = LANGS[S.lang].words ? ' ' : '';
+  const sep = LANGS[lang].words ? ' ' : '';
   const diff = g.t.map((u,i) => '<span class="' + (g.mask[i] ? 'ok' : 'miss') + '">' + esc(u) + '</span>').join(sep);
   box.innerHTML = '<span class="score ' + cls + '">' + g.score + '점</span>' + msg +
     '<div class="diff">' + diff + '</div>' +
@@ -516,7 +528,8 @@ function renderBars(){
   };
   fill('langRow', Object.entries(LANGS).map(([k,l]) => chip(l.name, S.lang===k, () => { S.lang=k; save(); renderAll(); })));
   fill('catRow', [chip('오늘의 문장', S.cat==='t', () => { S.cat='t'; save(); renderAll(); })]
-    .concat(CATS.map((c,i) => chip(c.name, S.cat===i, () => { S.cat=i; save(); renderAll(); }))));
+    .concat(CATS.map((c,i) => chip(c.name, S.cat===i, () => { S.cat=i; save(); renderAll(); })))
+    .concat([chip('내 노래', S.cat==='s', () => { S.cat='s'; save(); renderAll(); })]));
   fill('modeRow', Object.entries(MODES).map(([k,n]) => chip(n, S.mode===k, () => { S.mode=k; save(); renderAll(); })));
   const th = document.getElementById('thaiRow');
   th.hidden = S.lang !== 'th';
@@ -531,6 +544,7 @@ function refreshCard(card, key){
 }
 function renderList(){
   const list = document.getElementById('list'); list.innerHTML = '';
+  if (S.cat === 's') return renderSongs(list);
   const isToday = S.cat === 't';
   const entries = isToday
     ? pickToday(false).map(k => k.split('|').map(Number)).filter(([ci,i]) => CATS[ci] && CATS[ci].items[i])
@@ -577,6 +591,83 @@ function renderList(){
     refreshCard(card, key);
     list.appendChild(card);
   });
+}
+/* ---------- 내 노래: 사용자가 붙여넣은 가사를 줄마다 카드로. 가사는 이 기기에만 저장 ---------- */
+let songEditing = null; // null: 목록/보기, 'new': 새 노래, id: 고치는 중
+function renderSongs(list){
+  const head = document.createElement('div'); head.className = 'today-head';
+  head.innerHTML = '<div><b>내 노래</b> <span>가사를 붙여넣고 한 줄씩 따라 불러요</span></div>';
+  const ctl = document.createElement('div'); ctl.className = 'levels';
+  S.songs.forEach(s => ctl.appendChild(chip(s.title, S.song === s.id && !songEditing, () => { S.song = s.id; songEditing = null; save(); renderList(); })));
+  ctl.appendChild(chip('+ 새 노래', songEditing === 'new', () => { songEditing = 'new'; renderList(); }));
+  head.appendChild(ctl); list.appendChild(head);
+
+  const song = S.songs.find(s => s.id === S.song);
+  if (songEditing || !song) return list.appendChild(songForm(songEditing && songEditing !== 'new' ? S.songs.find(s => s.id === songEditing) : null));
+
+  const bar = document.createElement('div'); bar.className = 'songbar';
+  bar.innerHTML = '<div><b>' + esc(song.title) + '</b> <span>' + LANGS[song.lang].name + ' · ' + song.lines.length + '줄</span></div>';
+  const yt = document.createElement('a'); yt.className = 'act'; yt.target = '_blank'; yt.rel = 'noopener';
+  yt.href = 'https://www.youtube.com/results?search_query=' + encodeURIComponent(song.title);
+  yt.textContent = '유튜브에서 듣기';
+  const ed = document.createElement('button'); ed.className = 'act'; ed.textContent = '가사 고치기';
+  ed.onclick = () => { songEditing = song.id; renderList(); };
+  const del = document.createElement('button'); del.className = 'act'; del.textContent = '삭제';
+  del.onclick = () => {
+    if (del.dataset.sure){ S.songs = S.songs.filter(s => s.id !== song.id); S.song = S.songs[0]?.id || null; save(); renderList(); }
+    else { del.dataset.sure = '1'; del.textContent = '한 번 더 누르면 삭제'; }
+  };
+  const btns = document.createElement('div'); btns.className = 'levels'; btns.append(yt, ed, del);
+  bar.appendChild(btns); list.appendChild(bar);
+
+  song.lines.forEach((line, i) => {
+    const key = 'song|' + song.id + '|' + i;
+    const v = {text: line, alts: [line], lang: song.lang};
+    const card = document.createElement('article'); card.className = 'card open';
+    card.innerHTML =
+      '<div class="main"><div class="tag">' + (i+1) + '번째 줄</div>' +
+        '<div class="target" lang="' + LANGS[song.lang].code + '">' + esc(line) + '</div></div>' +
+      '<div class="stub">' +
+        '<button class="act" data-a="play">듣기</button>' +
+        '<button class="act" data-a="slow">천천히</button>' +
+        (CAN_MIC ? '<button class="act mic" data-a="mic">따라 부르기</button>' : '') +
+        '<span class="best"></span>' +
+      '</div><div class="result"></div>';
+    card.querySelector('[data-a=play]').onclick = () => speak(line, 0.95, song.lang);
+    card.querySelector('[data-a=slow]').onclick = () => speak(line, 0.6, song.lang);
+    if (CAN_MIC) card.querySelector('[data-a=mic]').onclick = e => listen(card, key, v, e.currentTarget);
+    refreshCard(card, key);
+    list.appendChild(card);
+  });
+}
+function songForm(song){
+  const f = document.createElement('form'); f.className = 'songform';
+  f.innerHTML =
+    '<label for="songTitle">노래 제목 (가수 이름도 같이 쓰면 유튜브에서 찾기 쉬워요)</label>' +
+    '<input id="songTitle" maxlength="80" placeholder="예: 노래 제목 - 가수">' +
+    '<label for="songLang">가사 언어</label>' +
+    '<select id="songLang">' + Object.entries(LANGS).map(([k,l]) => '<option value="' + k + '">' + l.name + '</option>').join('') + '</select>' +
+    '<label for="songLyrics">가사 붙여넣기</label>' +
+    '<textarea id="songLyrics" rows="10" placeholder="블로그나 가사 사이트에서 가사를 복사해서 여기에 길게 눌러 붙여넣으세요. 한 줄이 카드 하나가 돼요."></textarea>' +
+    '<p class="hint">가사는 이 기기에만 저장돼요. 한국어 해석이나 발음 줄이 섞여 있으면 지우고 원래 가사만 남기는 게 좋아요.</p>' +
+    '<div class="levels"><button class="act mic" type="submit">저장</button><button class="act" type="button" data-a="cancel">취소</button></div>' +
+    '<p class="err" hidden></p>';
+  f.querySelector('#songTitle').value = song ? song.title : '';
+  f.querySelector('#songLang').value = song ? song.lang : S.lang;
+  f.querySelector('#songLyrics').value = song ? song.lines.join('\n') : '';
+  f.querySelector('[data-a=cancel]').onclick = () => { songEditing = null; renderList(); };
+  f.onsubmit = e => {
+    e.preventDefault();
+    const title = f.querySelector('#songTitle').value.trim();
+    const lang = f.querySelector('#songLang').value;
+    const lines = f.querySelector('#songLyrics').value.split(/\r?\n/).map(s => s.trim()).filter(s => /\p{L}/u.test(s)).slice(0, 300);
+    const err = f.querySelector('.err');
+    if (!title || !lines.length){ err.hidden = false; err.textContent = !title ? '노래 제목을 써 주세요.' : '가사를 붙여넣어 주세요.'; return; }
+    if (song) Object.assign(song, {title, lang, lines});
+    else { const id = Date.now().toString(36); S.songs.push({id, title, lang, lines}); S.song = id; }
+    songEditing = null; save(); renderList();
+  };
+  return f;
 }
 function updateProgress(){
   let total = 0, passed = 0;
